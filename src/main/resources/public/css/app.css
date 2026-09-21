@@ -200,6 +200,8 @@ td .btn{margin:1px 0}
 /* ---------- 辅助 ---------- */
 .muted{color:var(--muted);font-size:var(--fs-sm)}
 .d-none{display:none !important}
+/* 放在 .row 里的按钮/窄控件：不参与等分伸缩（.row>* 会强制 flex:1） */
+.shrink{flex:0 0 auto}
 footer{text-align:center;color:var(--gray-400);font-size:var(--fs-xs);padding:var(--sp-8) 0}
 
 /* ---------- 尊重系统的减弱动效偏好 ---------- */
