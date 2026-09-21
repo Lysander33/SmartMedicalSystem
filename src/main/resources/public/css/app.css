@@ -1,0 +1,209 @@
+/* ============================================================
+   智慧医疗就诊系统 · 全站共享样式
+   四个端（患者/医生/药房/管理）共用同一套 token 与组件。
+   角色差异只体现在 --role 色带与身份 badge，正文一律使用主色。
+   单页独占的样式（.hero/.nav/.brand/.side/.stat-grid/.filters 等）
+   留在各页 <style> 内，不在此文件。
+   ============================================================ */
+
+/* ---------- 设计 token ---------- */
+:root{
+  /* 中性色阶（冷灰） */
+  --gray-50:#f8fafc;  --gray-100:#f1f5f9; --gray-200:#e2e8f0; --gray-300:#cbd5e1;
+  --gray-400:#94a3b8; --gray-500:#64748b; --gray-600:#475569; --gray-700:#334155;
+  --gray-800:#1e293b; --gray-900:#0f172a;
+
+  /* 主色 —— 医疗蓝 */
+  --blue-50:#eff6ff; --blue-100:#dbeafe; --blue-500:#3b82f6;
+  --blue-600:#2563eb; --blue-700:#1d4ed8;
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#eff6ff;
+  --primary-ring:rgba(37,99,235,.15);
+
+  /* 语义色 */
+  --success:#16a34a; --success-dark:#15803d; --success-bg:#dcfce7; --success-fg:#15803d;
+  --warn:#ea580c;    --warn-dark:#c2410c;    --warn-bg:#ffedd5;    --warn-fg:#c2410c;
+  --danger:#dc2626;  --danger-dark:#b91c1c;  --danger-bg:#fee2e2;  --danger-fg:#b91c1c;
+  --info:#0284c7;    --info-dark:#075985;    --info-bg:#e0f2fe;    --info-fg:#0369a1;
+  --neutral:#94a3b8; --neutral-dark:#64748b; --neutral-bg:#f1f5f9; --neutral-fg:#64748b;
+
+  /* 面 / 字 / 线 */
+  --bg:#f1f5f9; --surface:#fff;
+  --ink:#0f172a; --muted:#64748b;
+  --line:#e2e8f0; --line-strong:#cbd5e1;
+
+  /* 角色色 —— 仅用于顶栏色带与身份 badge */
+  --role-patient:#2563eb; --role-doctor:#0d9488;
+  --role-pharmacy:#7c3aed; --role-admin:#475569;
+  --role:var(--primary);
+
+  /* 间距刻度 */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+  /* 圆角刻度 */
+  --r-xs:4px; --r-sm:8px; --r-md:10px; --r-lg:12px;
+  --r-xl:14px; --r-2xl:16px; --r-full:999px;
+
+  /* 字号刻度 */
+  --fs-xs:.75rem; --fs-sm:.8rem; --fs-base:.875rem; --fs-md:.95rem;
+  --fs-lg:1.05rem; --fs-xl:1.25rem; --fs-2xl:1.6rem; --fs-3xl:1.9rem;
+
+  /* 阴影 —— 统一中性着色 */
+  --sh-sm:0 2px 6px rgba(15,23,42,.05);
+  --sh-md:0 4px 18px rgba(15,23,42,.07);
+  --sh-lg:0 12px 30px rgba(15,23,42,.12);
+  --sh-xl:0 24px 60px rgba(15,23,42,.22);
+
+  /* 动效 / 层级 */
+  --dur-fast:.15s; --dur:.22s; --dur-slow:.3s;
+  --ease:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --z-nav:10; --z-topbar:50; --z-mask:100;
+}
+
+/* 各端角色色带 */
+body[data-role="patient"]{ --role:var(--role-patient) }
+body[data-role="doctor"]{ --role:var(--role-doctor) }
+body[data-role="pharmacy"]{ --role:var(--role-pharmacy) }
+body[data-role="admin"]{ --role:var(--role-admin) }
+
+/* ---------- 基础 ---------- */
+*{box-sizing:border-box;margin:0;padding:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+body{background:var(--bg);min-height:100vh;color:var(--ink);font-size:var(--fs-base);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--primary);text-decoration:none}
+img,svg{max-width:100%}
+
+/* Lucide 图标：替换 <i data-lucide> 前后都能生效。
+   svg.lucide 是兜底 —— lucide 生成的 svg 一定带这个类，即使 class 未被保留也能定到尺寸 */
+.ico,svg.lucide{width:1.05em;height:1.05em;flex:0 0 auto;vertical-align:-.15em}
+.topbar .ico,.topbar svg.lucide{width:1.15em;height:1.15em}
+
+/* ---------- 顶栏 ---------- */
+.topbar{background:var(--gray-900);backdrop-filter:blur(8px);color:#fff;padding:0 var(--sp-6);height:62px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:var(--z-topbar);
+  box-shadow:var(--sh-md);border-top:3px solid var(--role)}
+.topbar b{font-size:1.1rem;letter-spacing:1px;font-weight:700}
+.topbar .logo{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:var(--sp-2)}
+.topbar .logo .badge{background:var(--role);color:#fff;font-size:var(--fs-xs);padding:3px var(--sp-3);
+  border-radius:var(--r-full);font-weight:600;letter-spacing:0}
+.topbar a{color:rgba(255,255,255,.82);text-decoration:none;font-size:var(--fs-sm);transition:color var(--dur)}
+.topbar a:hover{color:#fff}
+.topbar .who{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-sm);color:rgba(255,255,255,.9)}
+.topbar .who a{margin-left:var(--sp-2);border:1px solid rgba(255,255,255,.4);border-radius:var(--r-full);padding:4px var(--sp-3)}
+.topbar .who a:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+
+/* ---------- 页面容器 ---------- */
+.main{max-width:1180px;margin:var(--sp-6) auto;padding:0 var(--sp-4)}
+
+/* ---------- 卡片 ---------- */
+.card{background:var(--surface);border-radius:var(--r-2xl);padding:var(--sp-6);
+  margin-bottom:var(--sp-5);box-shadow:var(--sh-md);border:1px solid var(--line);animation:fadeIn var(--dur-slow) var(--ease-out)}
+.card h3{font-size:var(--fs-lg);color:var(--ink);margin-bottom:var(--sp-4);
+  display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
+.card h3::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,var(--role),var(--primary))}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- 按钮 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px var(--sp-5);border:none;border-radius:var(--r-md);background:var(--primary);color:#fff;
+  font-size:var(--fs-base);font-family:inherit;font-weight:500;line-height:1.4;cursor:pointer;
+  text-decoration:none;transition:background var(--dur),transform var(--dur),box-shadow var(--dur)}
+.btn:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 14px var(--primary-ring)}
+.btn:active{transform:none}
+.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.btn:disabled,.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.btn--success{background:var(--success)} .btn--success:hover{background:var(--success-dark);box-shadow:0 6px 14px rgba(22,163,74,.28)}
+.btn--warn{background:var(--warn)}    .btn--warn:hover{background:var(--warn-dark);box-shadow:0 6px 14px rgba(234,88,12,.28)}
+.btn--info{background:var(--info)}    .btn--info:hover{background:var(--info-dark);box-shadow:0 6px 14px rgba(2,132,199,.28)}
+.btn--neutral{background:var(--neutral)} .btn--neutral:hover{background:var(--neutral-dark);box-shadow:0 6px 14px rgba(100,116,139,.28)}
+.btn--danger{background:var(--danger)} .btn--danger:hover{background:var(--danger-dark);box-shadow:0 6px 14px rgba(220,38,38,.3)}
+.btn.sm{padding:5px var(--sp-3);font-size:var(--fs-sm);border-radius:var(--r-sm)}
+
+/* ---------- 表单 ---------- */
+input,select,textarea{width:100%;padding:10px var(--sp-3);border:1.5px solid var(--line);border-radius:var(--r-md);
+  font-size:var(--fs-base);font-family:inherit;color:var(--ink);outline:none;margin-bottom:var(--sp-2);
+  background:var(--gray-50);transition:border-color var(--dur),box-shadow var(--dur),background var(--dur)}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-ring);background:var(--surface)}
+input::placeholder,textarea::placeholder{color:var(--gray-400)}
+textarea{resize:vertical;line-height:1.6}
+select{cursor:pointer}
+label{font-size:var(--fs-sm);color:var(--gray-600);display:block;margin-bottom:5px;font-weight:500}
+
+/* ---------- 栅格 ---------- */
+.row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
+.row>*{flex:1;min-width:150px}
+
+/* ---------- 表格 ---------- */
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-base);
+  margin-top:var(--sp-2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+th,td{padding:10px var(--sp-3);text-align:left;border-bottom:1px solid var(--line)}
+th{background:var(--gray-100);color:var(--gray-700);font-weight:600;font-size:var(--fs-sm);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background var(--dur-fast)}
+tbody tr:hover{background:var(--gray-50)}
+td .btn{margin:1px 0}
+
+/* ---------- 状态徽章 ---------- */
+.tag{display:inline-block;padding:3px var(--sp-3);border-radius:var(--r-full);font-size:var(--fs-xs);font-weight:500;white-space:nowrap}
+.tag--success{background:var(--success-bg);color:var(--success-fg)}
+.tag--warn{background:var(--warn-bg);color:var(--warn-fg)}
+.tag--danger{background:var(--danger-bg);color:var(--danger-fg)}
+.tag--info{background:var(--info-bg);color:var(--info-fg)}
+.tag--neutral{background:var(--neutral-bg);color:var(--neutral-fg)}
+
+/* ---------- 分区切换（患者端 / 管理端） ---------- */
+.section{display:none}
+.section.active{display:block;animation:fadeIn var(--dur-slow) var(--ease-out)}
+
+/* ---------- 问诊对话 ---------- */
+.chat-box{border:1.5px solid var(--line);border-radius:var(--r-xl);height:340px;overflow:auto;padding:var(--sp-4);
+  background:var(--gray-50);display:flex;flex-direction:column}
+.msg{max-width:74%;padding:10px var(--sp-3);border-radius:var(--r-xl);margin-bottom:var(--sp-3);
+  font-size:var(--fs-base);line-height:1.6;box-shadow:var(--sh-sm);
+  background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:var(--r-xs);align-self:flex-start}
+/* .msg--mine 表示「自己发出的消息」。两端视角相反，用这个类显式表达，
+   避免复用 .msg.patient / .msg.doctor 造成语义冲突 */
+.msg--mine{background:linear-gradient(135deg,var(--primary),var(--blue-500));color:#fff;
+  margin-left:auto;border-color:transparent;border-bottom-left-radius:var(--r-xl);border-bottom-right-radius:var(--r-xs);align-self:flex-end}
+.msg--mine .muted{color:rgba(255,255,255,.78)}
+
+/* ---------- 头像 ---------- */
+.avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--blue-500));
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xl);font-weight:600;
+  box-shadow:0 4px 10px var(--primary-ring);flex:0 0 auto}
+
+/* ---------- 弹窗 ---------- */
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);
+  z-index:var(--z-mask);justify-content:center;align-items:center;padding:var(--sp-4)}
+.modal{position:relative;background:var(--surface);border-radius:var(--r-2xl);padding:var(--sp-8);
+  width:440px;max-width:100%;max-height:88vh;overflow:auto;box-shadow:var(--sh-xl);
+  animation:modalUp var(--dur-slow) var(--ease-out)}
+.modal h3{margin-bottom:var(--sp-4);color:var(--ink);font-size:var(--fs-lg);
+  display:flex;align-items:center;gap:var(--sp-2)}
+.modal-close{position:absolute;top:var(--sp-3);right:var(--sp-3);width:32px;height:32px;border-radius:50%;
+  border:none;background:none;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xl);
+  color:var(--gray-400);cursor:pointer;line-height:1;transition:background var(--dur),color var(--dur)}
+.modal-close:hover{background:var(--gray-100);color:var(--gray-700)}
+/* 高危操作确认弹窗（管理端删除医生等），复用同一结构 */
+.modal--danger{border-top:5px solid var(--danger)}
+.modal--danger h3{color:var(--danger-dark)}
+.modal--danger .risk{background:var(--danger-bg);border:1px solid #fecaca;border-radius:var(--r-md);
+  padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm);color:#7f1d1d;line-height:1.9;margin:var(--sp-3) 0}
+
+@keyframes modalUp{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ---------- 空态 ---------- */
+.empty{text-align:center;color:var(--gray-400);padding:var(--sp-8) 0;font-size:var(--fs-base)}
+.empty::before{content:"";display:block;width:40px;height:40px;margin:0 auto var(--sp-2);opacity:.5;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E") center/contain no-repeat}
+
+/* ---------- 辅助 ---------- */
+.muted{color:var(--muted);font-size:var(--fs-sm)}
+.d-none{display:none !important}
+footer{text-align:center;color:var(--gray-400);font-size:var(--fs-xs);padding:var(--sp-8) 0}
+
+/* ---------- 尊重系统的减弱动效偏好 ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;scroll-behavior:auto !important}
+}
