@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.DoctorMapper">
+    <sql id="baseColumns">
+        d.*, dp.name as dept_name, u.username as account
+    </sql>
+    <sql id="baseJoin">
+        from doctor d
+        left join department dp on d.dept_id=dp.id
+        left join sys_user u on u.role='doctor' and u.ref_id=d.id
+    </sql>
+    <select id="selectAll" resultType="com.example.medical.entity.Doctor">
+        select <include refid="baseColumns"/> <include refid="baseJoin"/> order by d.id
+    </select>
+    <select id="selectByDept" resultType="com.example.medical.entity.Doctor">
+        select <include refid="baseColumns"/> <include refid="baseJoin"/>
+        where d.dept_id=#{deptId} and d.status=1 order by d.id
+    </select>
+    <select id="selectById" resultType="com.example.medical.entity.Doctor">
+        select <include refid="baseColumns"/> <include refid="baseJoin"/> where d.id=#{id}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into doctor(name,title,dept_id,specialty,intro,fee,score,online_status,status)
+        values(#{name},#{title},#{deptId},#{specialty},#{intro},#{fee},5.0,'在线',1)
+    </insert>
+    <!-- 动态 set：未传的字段不覆盖，避免把没填的列写成 NULL
+         （doctor.fee 一旦为 NULL，开方时会污染 payment.amount） -->
+    <update id="update">
+        update doctor
+        <set>
+            <if test="name != null and name != ''">name=#{name},</if>
+            <if test="title != null">title=#{title},</if>
+            <if test="deptId != null">dept_id=#{deptId},</if>
+            <if test="specialty != null">specialty=#{specialty},</if>
+            <if test="intro != null">intro=#{intro},</if>
+            <if test="fee != null">fee=#{fee},</if>
+        </set>
+        where id=#{id}
+    </update>
+    <update id="updateStatus">
+        update doctor set status=#{status} where id=#{id}
+    </update>
+    <update id="updateOnlineStatus">
+        update doctor set online_status=#{onlineStatus} where id=#{id}
+    </update>
+</mapper>

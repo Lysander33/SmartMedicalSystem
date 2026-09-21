@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.MessageMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into message(consultation_id,sender,content,create_time)
+        values(#{consultationId},#{sender},#{content},now())
+    </insert>
+    <select id="selectByConsultationId" resultType="com.example.medical.entity.Message">
+        select * from message where consultation_id=#{consultationId} order by id
+    </select>
+</mapper>

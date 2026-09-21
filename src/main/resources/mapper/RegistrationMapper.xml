@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.RegistrationMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into registration(reg_no,patient_id,visitor_id,visitor_name,doctor_id,doctor_name,dept_name,work_date,time_slot,fee,status,create_time)
+        values(#{regNo},#{patientId},#{visitorId},#{visitorName},#{doctorId},#{doctorName},#{deptName},#{workDate},#{timeSlot},#{fee},'待支付',now())
+    </insert>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.Registration">
+        select * from registration where patient_id=#{patientId} order by id desc
+    </select>
+    <select id="selectById" resultType="com.example.medical.entity.Registration">
+        select * from registration where id=#{id}
+    </select>
+    <select id="selectByDoctorId" resultType="com.example.medical.entity.Registration">
+        select * from registration where doctor_id=#{doctorId} order by work_date desc,id desc
+    </select>
+    <select id="selectQueueByDoctorId" resultType="com.example.medical.entity.Registration">
+        select * from registration where doctor_id=#{doctorId} and status='已支付'
+        order by work_date,time_slot,id
+    </select>
+    <update id="pay">
+        update registration set status='已支付',pay_type=#{payType},pay_time=now()
+        where id=#{id} and status='待支付'
+    </update>
+    <update id="cancel">
+        update registration set status='已取消'
+        where id=#{id} and status in ('待支付','已支付')
+    </update>
+    <update id="finish">
+        update registration set status='已完成',finish_time=now()
+        where id=#{id} and status='已支付'
+    </update>
+    <select id="countConflict" resultType="java.lang.Integer">
+        select count(*) from registration r join schedule s on r.doctor_id=s.doctor_id and r.work_date=s.work_date and r.time_slot=s.time_slot
+        where r.visitor_id=#{visitorId} and s.id=#{scheduleId} and r.status in ('待支付','已支付')
+    </select>
+    <select id="countActiveByDoctorId" resultType="java.lang.Integer">
+        select count(*) from registration where doctor_id=#{doctorId} and status in ('待支付','已支付')
+    </select>
+</mapper>

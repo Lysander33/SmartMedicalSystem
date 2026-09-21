@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.ScheduleMapper">
+    <select id="selectByDoctorId" resultType="com.example.medical.entity.Schedule">
+        select s.*,d.name as doctor_name,d.fee,dp.name as dept_name
+        from schedule s
+        left join doctor d on s.doctor_id=d.id
+        left join department dp on d.dept_id=dp.id
+        where s.doctor_id=#{doctorId} and s.work_date>=curdate()
+        order by s.work_date,s.time_slot
+    </select>
+    <select id="selectById" resultType="com.example.medical.entity.Schedule">
+        select s.*,d.name as doctor_name,d.fee,dp.name as dept_name
+        from schedule s
+        left join doctor d on s.doctor_id=d.id
+        left join department dp on d.dept_id=dp.id
+        where s.id=#{id}
+    </select>
+    <select id="selectByDoctorDateSlot" resultType="com.example.medical.entity.Schedule">
+        select * from schedule where doctor_id=#{doctorId} and work_date=#{workDate} and time_slot=#{timeSlot}
+    </select>
+    <update id="reduceRemain">
+        update schedule set remain_count=remain_count-1 where id=#{id} and remain_count>0
+    </update>
+    <!-- 号源释放必须有上限：否则取消挂号被重复执行时号源会不断虚增，最终超卖 -->
+    <update id="addRemain">
+        update schedule set remain_count=remain_count+1 where id=#{id} and remain_count&lt;total_count
+    </update>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into schedule(doctor_id,work_date,time_slot,total_count,remain_count)
+        values(#{doctorId},#{workDate},#{timeSlot},#{totalCount},#{totalCount})
+    </insert>
+    <delete id="delete">
+        delete from schedule where id=#{id}
+    </delete>
+    <delete id="deleteByDoctorId">
+        delete from schedule where doctor_id=#{doctorId}
+    </delete>
+</mapper>

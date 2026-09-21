@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.PrescriptionMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into prescription(rx_no,consultation_id,patient_id,visitor_name,doctor_id,doctor_name,diagnosis,status,total_amount,create_time)
+        values(#{rxNo},#{consultationId},#{patientId},#{visitorName},#{doctorId},#{doctorName},#{diagnosis},'待缴费',#{totalAmount},now())
+    </insert>
+    <select id="selectById" resultType="com.example.medical.entity.Prescription">
+        select * from prescription where id=#{id}
+    </select>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.Prescription">
+        select * from prescription where patient_id=#{patientId} order by id desc
+    </select>
+    <select id="selectByDoctorId" resultType="com.example.medical.entity.Prescription">
+        select * from prescription where doctor_id=#{doctorId} order by id desc
+    </select>
+    <select id="selectByStatus" resultType="com.example.medical.entity.Prescription">
+        select * from prescription where status=#{status} order by id desc
+    </select>
+    <select id="selectAll" resultType="com.example.medical.entity.Prescription">
+        select * from prescription order by id desc
+    </select>
+    <update id="updateStatusFrom">
+        update prescription set status=#{status} where id=#{id} and status=#{fromStatus}
+    </update>
+    <!-- 发药：仅"待发药"可改为"已完成"，防止重复发药 -->
+    <update id="finish">
+        update prescription set status=#{status},remark=#{remark},finish_time=now()
+        where id=#{id} and status='待发药'
+    </update>
+</mapper>

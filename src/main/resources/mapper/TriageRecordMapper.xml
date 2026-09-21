@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.TriageRecordMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into triage_record(patient_id,visitor_id,visitor_name,body_part,symptoms,duration,suggested_dept,urgency,advice,create_time)
+        values(#{patientId},#{visitorId},#{visitorName},#{bodyPart},#{symptoms},#{duration},#{suggestedDept},#{urgency},#{advice},now())
+    </insert>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.TriageRecord">
+        select * from triage_record where patient_id=#{patientId} order by id desc
+    </select>
+</mapper>

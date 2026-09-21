@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧医疗就诊系统 - 管理平台</title>
+<style>
+:root{--brand:#334155;--brand-dark:#1e293b;--accent:#0ea5e9;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#eef2f6}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+body{background:var(--bg);min-height:100vh;color:var(--ink)}
+.topbar{background:rgba(15,23,42,.97);backdrop-filter:blur(8px);color:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 14px rgba(15,23,42,.3)}
+.topbar b{font-size:1.1rem;letter-spacing:1px}
+.topbar a{color:#cbd5e1;text-decoration:none;margin-left:14px;font-size:.85rem;opacity:.92;transition:.2s}
+.topbar a:hover{opacity:1;color:#fff}
+.layout{display:flex;max-width:1250px;margin:22px auto;padding:0 14px;gap:18px}
+.side{width:196px;flex:0 0 196px;background:#fff;border-radius:16px;padding:14px 12px;box-shadow:0 4px 18px rgba(15,23,42,.07);height:fit-content;position:sticky;top:82px}
+.side button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:none;padding:12px 14px;border-radius:10px;font-size:.9rem;color:#475569;cursor:pointer;margin-bottom:4px;transition:.2s;font-weight:500}
+.side button.active{background:linear-gradient(90deg,#1e293b,#334155);color:#fff;box-shadow:0 4px 12px rgba(30,41,59,.28)}
+.side button:hover:not(.active){background:#f1f5f9;color:var(--brand-dark)}
+.content{flex:1;min-width:0}
+.card{background:#fff;border-radius:16px;padding:24px 26px;margin-bottom:20px;box-shadow:0 4px 18px rgba(15,23,42,.06);border:1px solid #eef2f6;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card h3{font-size:1.06rem;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.card h3::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,#334155,#0ea5e9)}
+.btn{display:inline-block;padding:9px 20px;border:none;border-radius:10px;background:#334155;color:#fff;font-size:.88rem;cursor:pointer;transition:.22s;font-weight:500}
+.btn:hover{background:#1e293b;transform:translateY(-1px);box-shadow:0 6px 14px rgba(30,41,59,.25)}
+.btn.green{background:#16a34a}.btn.green:hover{background:#15803d}
+.btn.orange{background:#ea580c}.btn.orange:hover{background:#c2410c}
+.btn.blue{background:#0369a1}.btn.blue:hover{background:#075985}
+.btn.gray{background:#94a3b8}.btn.gray:hover{background:#64748b}
+.btn.sm{padding:5px 13px;font-size:.8rem;border-radius:8px}
+input,select{width:100%;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:.88rem;outline:none;margin-bottom:8px;background:#fbfdfd;transition:.2s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(14,165,233,.1);background:#fff}
+label{font-size:.82rem;color:#475569;display:block;margin-bottom:4px;font-weight:500}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.83rem;margin-top:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid #eef2f6}
+th{background:#f1f5f9;color:#334155;font-weight:600;font-size:.8rem}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:.15s}
+tbody tr:hover{background:#f6f9fc}
+.tag{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.73rem;font-weight:500}
+.tag.blue{background:#e0f2fe;color:#0369a1}.tag.green{background:#dcfce7;color:#15803d}
+.tag.orange{background:#ffedd5;color:#c2410c}.tag.red{background:#fee2e2;color:#b91c1c}.tag.gray{background:#f1f5f9;color:#64748b}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stat{background:linear-gradient(135deg,#1e293b,#334155);color:#fff;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 8px 18px rgba(30,41,59,.22);transition:.25s;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(14,165,233,.18);top:-30px;right:-30px}
+.stat:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(30,41,59,.3)}
+.stat .num{font-size:1.65rem;font-weight:700}
+.stat .lbl{font-size:.8rem;opacity:.85;margin-top:5px}
+.empty{text-align:center;color:#94a3b8;padding:36px 0;font-size:.88rem}
+.empty::before{content:"🗂️";display:block;font-size:2rem;margin-bottom:8px;opacity:.6}
+.muted{color:#94a3b8;font-size:.8rem}
+.section{display:none}.section.active{display:block}
+footer{text-align:center;color:#94a3b8;font-size:.78rem;padding:30px 0}
+/* 高危操作确认弹窗 */
+.danger-mask{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);z-index:100;justify-content:center;align-items:center}
+.danger-modal{background:#fff;border-radius:18px;padding:30px 32px;width:430px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:up .3s ease;border-top:5px solid #dc2626}
+@keyframes up{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.danger-modal h3{color:#b91c1c;font-size:1.1rem;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.danger-modal .risk{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:.84rem;color:#7f1d1d;line-height:1.9;margin:12px 0}
+.btn.danger{background:#dc2626}.btn.danger:hover{background:#b91c1c;box-shadow:0 6px 14px rgba(220,38,38,.3)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><b>🖥️ 智慧医疗就诊系统 · 管理平台</b></div>
+  <div id="staffArea" style="font-size:.85rem"></div>
+</div>
+
+<div class="layout">
+  <div class="side" id="side">
+    <button data-s="stats" class="active">📊 统计报表</button>
+    <button data-s="doctor">👨‍⚕️ 医生管理</button>
+    <button data-s="schedule">🗓️ 排班管理</button>
+    <button data-s="patient">🧑‍🤝‍🧑 患者管理</button>
+    <button data-s="medicine">💊 药品信息管理</button>
+    <button data-s="order">🧾 订单信息管理</button>
+    <button data-s="qa">❓ 在线问答管理</button>
+  </div>
+
+  <div class="content">
+    <!-- 统计报表 -->
+    <div class="section active" id="s-stats">
+      <div class="card">
+        <h3>📊 运营统计报表</h3>
+        <div class="stat-grid" id="statsGrid"></div>
+        <p class="muted" style="margin-top:10px">统计口径：挂号量、处方量、缴费金额、发药完成情况等（实时数据）</p>
+      </div>
+    </div>
+
+    <!-- 医生管理 -->
+    <div class="section" id="s-doctor">
+      <div class="card">
+        <h3>👨‍⚕️ 医生管理（信息维护 / 账号管理 / 在线状态）</h3>
+        <div class="row" style="align-items:flex-end;margin-bottom:6px;background:#f8fafc;border-radius:10px;padding:10px 12px">
+          <div><label>重置密码：选择医生</label><select id="pwdDoctor"></select></div>
+          <div style="max-width:180px"><label>新密码</label><input id="pwdNew" placeholder="输入新密码"></div>
+          <div style="flex:0 0 auto"><button class="btn orange" onclick="doResetPwd()">确认重置</button></div>
+        </div>
+        <div id="doctorList"></div>
+      </div>
+      <div class="card">
+        <h3>➕ 新增医生（为新转来的医生开通账号）</h3>
+        <div class="row">
+          <div><label>姓名</label><input id="dName"></div>
+          <div><label>职称</label><select id="dTitle"><option>主任医师</option><option>副主任医师</option><option>主治医师</option><option>住院医师</option></select></div>
+          <div><label>科室</label><select id="dDept"></select></div>
+        </div>
+        <div class="row">
+          <div><label>登录工号（留空自动生成）</label><input id="dAccount" placeholder="如 D2001"></div>
+          <div><label>初始密码（留空默认123456）</label><input id="dPwd" placeholder="为医生设置初始密码"></div>
+        </div>
+        <div class="row">
+          <div><label>擅长领域</label><input id="dSpecialty"></div>
+          <div><label>挂号费（元）</label><input id="dFee" type="number" value="15"></div>
+        </div>
+        <label>医生简介</label><input id="dIntro">
+        <button class="btn" onclick="addDoctor()">新增医生并开通账号</button>
+      </div>
+    </div>
+
+    <!-- 排班管理 -->
+    <div class="section" id="s-schedule">
+      <div class="card">
+        <h3>🗓️ 排班管理（维护出诊日期、时段与号源数量）</h3>
+        <div class="row">
+          <div><label>医生</label><select id="sDoctor" onchange="loadSchedules()"></select></div>
+          <div><label>出诊日期</label><input id="sDate" type="date"></div>
+          <div><label>时段</label><select id="sSlot"><option>上午</option><option>下午</option><option>晚间</option></select></div>
+          <div><label>号源数量</label><input id="sCount" type="number" value="20"></div>
+        </div>
+        <button class="btn" onclick="addSchedule()">新增排班</button>
+        <div id="scheduleList"></div>
+      </div>
+    </div>
+
+    <!-- 患者管理 -->
+    <div class="section" id="s-patient">
+      <div class="card">
+        <h3>🧑‍🤝‍🧑 患者管理（档案查看 / 账号状态管理）</h3>
+        <div id="patientList"></div>
+      </div>
+    </div>
+
+    <!-- 药品管理 -->
+    <div class="section" id="s-medicine">
+      <div class="card">
+        <h3>💊 药品信息管理（字典 / 库存 / 上下架 / 低库存预警）</h3>
+        <div class="row" style="align-items:flex-end;margin-bottom:6px;background:#f8fafc;border-radius:10px;padding:10px 12px">
+          <div><label>药品入库：选择药品</label><select id="stockMed"></select></div>
+          <div style="max-width:140px"><label>入库数量</label><input id="stockQty" type="number" value="100"></div>
+          <div style="flex:0 0 auto"><button class="btn green" onclick="doAddStock()">确认入库</button></div>
+        </div>
+        <div id="medicineList"></div>
+      </div>
+      <div class="card">
+        <h3>➕ 新增药品</h3>
+        <div class="row">
+          <div><label>药品名称</label><input id="mName"></div>
+          <div><label>通用名</label><input id="mGeneric"></div>
+          <div><label>规格</label><input id="mSpec" placeholder="如 0.25g*24粒"></div>
+        </div>
+        <div class="row">
+          <div><label>分类</label><input id="mCategory" placeholder="如 抗感染药"></div>
+          <div><label>生产厂家</label><input id="mManufacturer"></div>
+          <div><label>医保类别</label><select id="mInsurance"><option>甲类</option><option>乙类</option><option>丙类</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>零售价（元）</label><input id="mPrice" type="number" step="0.01"></div>
+          <div><label>初始库存</label><input id="mStock" type="number" value="100"></div>
+          <div><label>预警库存</label><input id="mWarn" type="number" value="20"></div>
+        </div>
+        <button class="btn" onclick="addMedicine()">新增药品</button>
+      </div>
+    </div>
+
+    <!-- 订单管理 -->
+    <div class="section" id="s-order">
+      <div class="card">
+        <h3>🧾 订单信息管理（挂号 / 缴费 / 处方订单统一查询与状态跟踪）</h3>
+        <button class="btn sm gray" onclick="loadOrders()">刷新</button>
+        <div id="orderList"></div>
+      </div>
+    </div>
+
+    <!-- 问答管理 -->
+    <div class="section" id="s-qa">
+      <div class="card">
+        <h3>❓ 在线问答管理（问题接收与在线解答）</h3>
+        <div id="qaList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>智慧医疗就诊系统 · 管理平台 | 在线问答 · AI预分诊管理 · 医生管理 · 患者管理 · 药品信息管理 · 订单信息管理</footer>
+
+<!-- 删除医生账号-风险确认弹窗 -->
+<div class="danger-mask" id="delMask" onclick="if(event.target===this)closeDelMask()">
+  <div class="danger-modal">
+    <h3>⚠️ 删除医生账号（高危操作）</h3>
+    <div style="font-size:.92rem;color:#334155" id="delDocInfo"></div>
+    <div class="risk">
+      <b>办理离职前请确认以下影响：</b><br>
+      ① 该医生将<b>立即无法登录</b>医生端，并从挂号列表下架；<br>
+      ② 该医生<b>未开始的排班与号源</b>将被清除；<br>
+      ③ 若该医生还有<b>未完成的问诊</b>或<b>未就诊的挂号</b>（待支付/已支付），系统会拒绝办理；<br>
+      ④ <b>历史处方、挂号、病历全部保留可追溯</b>，患者仍可正常查询。
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn gray" onclick="closeDelMask()">取消</button>
+      <button class="btn danger" onclick="doDeleteDoctor()">我已了解影响，确认办理离职</button>
+    </div>
+  </div>
+</div>
+
+<script>
+//统一登录：令牌与身份按角色分槽存（token_患者 / token_管理员 ...），四个端互不覆盖
+const MY_ROLE = 'admin';
+let token = localStorage.getItem('token_' + MY_ROLE) || '';
+let staff = token ? JSON.parse(localStorage.getItem('user_' + MY_ROLE) || 'null') : null;
+
+function clearAuth() {
+  localStorage.removeItem('token_' + MY_ROLE);
+  localStorage.removeItem('user_' + MY_ROLE);
+  ['token', 'user', 'role', 'patient', 'doctor', 'doctor_token', 'staff'].forEach(k => localStorage.removeItem(k));
+}
+async function logoutStaff() {
+  try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+  clearAuth();
+  location.href = '/login.html?role=admin';
+}
+
+//所有请求统一带上 X-Token，令牌失效集中跳登录页
+async function api(url, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  if (token) headers['X-Token'] = token;
+  let r;
+  try {
+    const res = await fetch(url, Object.assign({}, opts, { headers }));
+    r = await res.json();
+  } catch (e) {
+    return { code: -1, msg: '网络异常：' + e.message };
+  }
+  if (r && r.code === 401) {
+    alert('登录状态已失效，请重新登录');
+    clearAuth();
+    location.href = '/login.html?role=admin';
+    throw new Error('401');
+  }
+  return r;
+}
+//后端返回的是 ISO(UTC) 时间，统一转成本地时间显示（直接截字符串会差8小时甚至差一天）
+function fmtTime(d) {
+  if (!d) return '';
+  const t = new Date(d);
+  if (isNaN(t.getTime())) return String(d);
+  const p = n => String(n).padStart(2, '0');
+  return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
+}
+function fmt(d) { return fmtTime(d).substring(0, 10); }
+//医生状态：1正常 0停用 2离职（软删除）
+function statusTag(s) {
+  if (s === 1) return '<span class="tag green">正常</span>';
+  if (s === 2) return '<span class="tag gray">已离职</span>';
+  return '<span class="tag red">停用</span>';
+}
+
+//当前栏目同步写进 URL 的 #（如 /admin.html#doctor），刷新后按 # 恢复
+const SECTIONS = ['stats', 'doctor', 'schedule', 'patient', 'medicine', 'order', 'qa'];
+function activate(s) {
+  if (!SECTIONS.includes(s)) s = 'stats';
+  document.querySelectorAll('.side button').forEach(b => b.classList.toggle('active', b.dataset.s === s));
+  document.querySelectorAll('.section').forEach(x => x.classList.toggle('active', x.id === 's-' + s));
+  load(s);
+  //用 replaceState 而不是改 location.hash：不产生历史记录，也不会触发 hashchange 再切一次
+  history.replaceState(null, '', s === 'stats' ? location.pathname : '#' + s);
+}
+document.getElementById('side').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  activate(btn.dataset.s);
+});
+function load(s) {
+  if (s === 'stats') loadStats();
+  if (s === 'doctor') loadDoctors();
+  if (s === 'schedule') { loadScheduleDoctors(); }
+  if (s === 'patient') loadPatients();
+  if (s === 'medicine') loadMedicines();
+  if (s === 'order') loadOrders();
+  if (s === 'qa') loadQa();
+}
+
+// ==================== 统计报表 ====================
+async function loadStats() {
+  const r = await api('/api/admin/order/stats');
+  const d = r.data || {};
+  document.getElementById('statsGrid').innerHTML = Object.entries(d).map(([k, v]) =>
+    `<div class="stat"><div class="num">${v}</div><div class="lbl">${k}</div></div>`).join('');
+}
+
+// ==================== 医生管理 ====================
+async function loadDoctors() {
+  const r = await api('/api/admin/doctor/list');
+  const box = document.getElementById('doctorList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无医生</div>'; return; }
+  box.innerHTML = '<table><tr><th>ID</th><th>姓名</th><th>职称</th><th>科室</th><th>登录工号</th><th>挂号费</th><th>评分</th><th>在线状态</th><th>账号</th><th>操作</th></tr>' +
+    r.data.map(d => `<tr><td>${d.id}</td><td>${d.name}</td><td>${d.title}</td><td>${d.deptName || d.deptId}</td>
+      <td><b>${d.account || '-'}</b></td><td>￥${d.fee}</td><td>${d.score}</td>
+      <td><span class="tag ${d.onlineStatus === '在线' ? 'green' : d.onlineStatus === '忙碌' ? 'orange' : 'gray'}">${d.onlineStatus}</span></td>
+      <td>${statusTag(d.status)}</td>
+      <td>
+        <button class="btn sm blue" onclick="toggleOnline(${d.id},'${d.onlineStatus}')">切换在线</button>
+        ${d.status === 2 ? '' : `<button class="btn sm ${d.status === 1 ? 'orange' : 'green'}" onclick="toggleDoctor(${d.id},${d.status})">${d.status === 1 ? '停用' : '开通'}</button>`}
+        <button class="btn sm gray" onclick="resetPwdFor(${d.id})">重置密码</button>
+        ${d.status === 2 ? '<span class="muted">已离职</span>'
+          : `<button class="btn sm danger" style="background:#dc2626" onclick="askDeleteDoctor(${d.id},'${d.name}','${d.account || ''}')">办理离职</button>`}
+      </td></tr>`).join('') + '</table>';
+  const dr = await api('/api/guide/depts');
+  document.getElementById('dDept').innerHTML = (dr.data || []).map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+  //同步刷新重置密码的医生下拉框
+  const pwdSel = document.getElementById('pwdDoctor');
+  const oldVal = pwdSel.value;
+  pwdSel.innerHTML = r.data.map(d => `<option value="${d.id}">${d.name}（${d.account || ''}）</option>`).join('');
+  if (oldVal) pwdSel.value = oldVal;
+}
+function resetPwdFor(id) {
+  // 行内“重置密码”按钮：选中对应医生并聚焦新密码输入框
+  document.getElementById('pwdDoctor').value = String(id);
+  document.getElementById('pwdNew').focus();
+}
+// ==================== 删除医生账号（高危操作，删除前提示风险） ====================
+let pendingDeleteId = null;
+function askDeleteDoctor(id, name, account) {
+  pendingDeleteId = id;
+  document.getElementById('delDocInfo').textContent = `医生：${name}（工号 ${account}）`;
+  document.getElementById('delMask').style.display = 'flex';
+}
+function closeDelMask() {
+  pendingDeleteId = null;
+  document.getElementById('delMask').style.display = 'none';
+}
+async function doDeleteDoctor() {
+  if (!pendingDeleteId) return;
+  const r = await api(`/api/admin/doctor/delete?id=${pendingDeleteId}`, { method: 'POST' });
+  closeDelMask();
+  alert(r.msg);
+  if (r.code === 200) loadDoctors();
+}
+async function doResetPwd() {
+  const id = document.getElementById('pwdDoctor').value;
+  const newPassword = document.getElementById('pwdNew').value;
+  if (!newPassword || newPassword.length < 6) { alert('新密码至少6位'); return; }
+  const r = await api(`/api/admin/doctor/resetpwd?id=${id}&newPassword=${encodeURIComponent(newPassword)}`, { method: 'POST' });
+  alert(r.msg);
+  if (r.code === 200) document.getElementById('pwdNew').value = '';
+}
+async function toggleDoctor(id, status) {
+  const r = await api(`/api/admin/doctor/status?id=${id}&status=${status === 1 ? 0 : 1}`, { method: 'POST' });
+  alert(r.msg); loadDoctors();
+}
+async function toggleOnline(id, cur) {
+  const next = cur === '在线' ? '忙碌' : cur === '忙碌' ? '离线' : '在线';
+  const r = await api(`/api/admin/doctor/online?id=${id}&onlineStatus=${encodeURIComponent(next)}`, { method: 'POST' });
+  alert(r.msg); loadDoctors();
+}
+async function addDoctor() {
+  const body = {
+    name: document.getElementById('dName').value.trim(),
+    title: document.getElementById('dTitle').value,
+    deptId: Number(document.getElementById('dDept').value),
+    specialty: document.getElementById('dSpecialty').value.trim(),
+    intro: document.getElementById('dIntro').value.trim(),
+    fee: Number(document.getElementById('dFee').value),
+    account: document.getElementById('dAccount').value.trim(),
+    password: document.getElementById('dPwd').value
+  };
+  const r = await api('/api/admin/doctor/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (r.code === 200) {
+    //成功后告知管理员开通的登录工号，方便转达给新医生
+    alert('医生账号开通成功！\n姓名：' + r.data.name + '\n登录工号：' + r.data.account + '\n初始密码：' + (body.password || '123456') + '\n\n请将工号和密码告知医生本人。');
+    ['dName', 'dAccount', 'dPwd', 'dSpecialty', 'dIntro'].forEach(id => document.getElementById(id).value = '');
+    loadDoctors();
+  } else {
+    alert(r.msg);
+  }
+}
+
+// ==================== 排班管理 ====================
+async function loadScheduleDoctors() {
+  const r = await api('/api/guide/doctor/all');
+  document.getElementById('sDoctor').innerHTML = (r.data || []).map(d =>
+    `<option value="${d.id}">${d.name}（${d.deptName || ''}）</option>`).join('');
+  loadSchedules();
+}
+async function loadSchedules() {
+  const doctorId = document.getElementById('sDoctor').value;
+  if (!doctorId) return;
+  const r = await api('/api/admin/schedule/list?doctorId=' + doctorId);
+  const box = document.getElementById('scheduleList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">该医生暂无排班</div>'; return; }
+  box.innerHTML = '<table><tr><th>出诊日期</th><th>时段</th><th>剩余/总号源</th></tr>' +
+    r.data.map(s => `<tr><td>${fmt(s.workDate)}</td><td>${s.timeSlot}</td><td>${s.remainCount}/${s.totalCount}</td></tr>`).join('') + '</table>';
+}
+async function addSchedule() {
+  const body = {
+    doctorId: Number(document.getElementById('sDoctor').value),
+    workDate: document.getElementById('sDate').value,
+    timeSlot: document.getElementById('sSlot').value,
+    totalCount: Number(document.getElementById('sCount').value)
+  };
+  if (!body.workDate) { alert('请选择出诊日期'); return; }
+  const r = await api('/api/admin/schedule/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  alert(r.msg);
+  if (r.code === 200) loadSchedules();
+}
+
+// ==================== 患者管理 ====================
+async function loadPatients() {
+  const r = await api('/api/admin/patient/list');
+  const box = document.getElementById('patientList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无患者</div>'; return; }
+  box.innerHTML = '<table><tr><th>ID</th><th>手机号</th><th>姓名</th><th>身份证号</th><th>性别</th><th>注册时间</th><th>账号状态</th><th>操作</th></tr>' +
+    r.data.map(p => `<tr><td>${p.id}</td><td>${p.phone}</td><td>${p.name || ''}</td><td>${p.idCard || ''}</td>
+      <td>${p.sex || ''}</td><td>${fmtTime(p.createTime)}</td>
+      <td><span class="tag ${p.status === 1 ? 'green' : 'red'}">${p.status === 1 ? '正常' : '已停用'}</span></td>
+      <td><button class="btn sm ${p.status === 1 ? 'orange' : 'green'}" onclick="togglePatient(${p.id},${p.status})">${p.status === 1 ? '停用' : '恢复'}</button></td></tr>`).join('') + '</table>';
+}
+async function togglePatient(id, status) {
+  const r = await api(`/api/admin/patient/status?id=${id}&status=${status === 1 ? 0 : 1}`, { method: 'POST' });
+  alert(r.msg); loadPatients();
+}
+
+// ==================== 药品管理 ====================
+async function loadMedicines() {
+  const r = await api('/api/admin/medicine/list');
+  const box = document.getElementById('medicineList');
+  //同步刷新入库药品下拉框
+  const stockSel = document.getElementById('stockMed');
+  const oldVal = stockSel.value;
+  stockSel.innerHTML = (r.data || []).map(m => `<option value="${m.id}">${m.name}（当前库存${m.stock}）</option>`).join('');
+  if (oldVal) stockSel.value = oldVal;
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无药品</div>'; return; }
+  box.innerHTML = '<table><tr><th>ID</th><th>名称</th><th>规格</th><th>分类</th><th>价格</th><th>库存</th><th>医保</th><th>状态</th><th>操作</th></tr>' +
+    r.data.map(m => `<tr>
+      <td>${m.id}</td><td>${m.name}</td><td>${m.spec}</td><td>${m.category}</td><td>￥${m.price}</td>
+      <td>${m.stock <= m.warnStock ? `<span class="tag red">${m.stock} ⚠️低库存</span>` : m.stock}</td>
+      <td>${m.insuranceType}</td>
+      <td><span class="tag ${m.status === '上架' ? 'green' : 'gray'}">${m.status}</span></td>
+      <td>
+        <button class="btn sm green" onclick="addStock(${m.id})">入库</button>
+        <button class="btn sm ${m.status === '上架' ? 'orange' : 'blue'}" onclick="toggleMedicine(${m.id},'${m.status}')">${m.status === '上架' ? '下架' : '上架'}</button>
+      </td></tr>`).join('') + '</table>';
+}
+function addStock(id) {
+  // 行内“入库”按钮：选中对应药品并聚焦数量输入框
+  document.getElementById('stockMed').value = String(id);
+  document.getElementById('stockQty').focus();
+}
+async function doAddStock() {
+  const id = document.getElementById('stockMed').value;
+  const qty = Number(document.getElementById('stockQty').value);
+  if (!id) { alert('请先选择药品'); return; }
+  if (!qty || qty <= 0) { alert('请输入正确的入库数量'); return; }
+  const r = await api(`/api/admin/medicine/stock?id=${id}&quantity=${qty}`, { method: 'POST' });
+  alert(r.msg); loadMedicines();
+}
+async function toggleMedicine(id, status) {
+  const next = status === '上架' ? '下架' : '上架';
+  const r = await api(`/api/admin/medicine/status?id=${id}&status=${encodeURIComponent(next)}`, { method: 'POST' });
+  alert(r.msg); loadMedicines();
+}
+async function addMedicine() {
+  const body = {
+    name: document.getElementById('mName').value.trim(),
+    genericName: document.getElementById('mGeneric').value.trim(),
+    spec: document.getElementById('mSpec').value.trim(),
+    category: document.getElementById('mCategory').value.trim(),
+    manufacturer: document.getElementById('mManufacturer').value.trim(),
+    insuranceType: document.getElementById('mInsurance').value,
+    price: Number(document.getElementById('mPrice').value),
+    stock: Number(document.getElementById('mStock').value),
+    warnStock: Number(document.getElementById('mWarn').value)
+  };
+  const r = await api('/api/admin/medicine/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  alert(r.msg);
+  if (r.code === 200) loadMedicines();
+}
+
+// ==================== 订单管理 ====================
+async function loadOrders() {
+  const r = await api('/api/admin/order/list');
+  const box = document.getElementById('orderList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无订单</div>'; return; }
+  const color = { '待支付': 'orange', '已支付': 'green', '已退款': 'gray', '已取消': 'gray' };
+  box.innerHTML = '<table><tr><th>订单号</th><th>患者ID</th><th>类型</th><th>明细</th><th>金额</th><th>状态</th><th>支付方式</th><th>下单时间</th></tr>' +
+    r.data.map(o => `<tr><td>${o.orderNo}</td><td>${o.patientId}</td><td><span class="tag blue">${o.bizType}</span></td>
+      <td>${o.title}</td><td>￥${o.amount}</td>
+      <td><span class="tag ${color[o.status]}">${o.status}</span></td><td>${o.payType || '-'}</td>
+      <td>${fmtTime(o.createTime)}</td></tr>`).join('') + '</table>';
+}
+
+// ==================== 问答管理 ====================
+async function loadQa() {
+  const r = await api('/api/admin/qa/list');
+  const box = document.getElementById('qaList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无问题</div>'; return; }
+  box.innerHTML = r.data.map(q => `
+    <div style="border-bottom:1px dashed #e2e8f0;padding:10px 0">
+      <div>❓ <b>${q.patientName}</b>：${q.content}
+        <span class="tag ${q.status === '已回复' ? 'green' : 'orange'}">${q.status}</span>
+        <span class="muted">${fmtTime(q.createTime)}</span></div>
+      ${q.answer ? `<div style="color:#0369a1;font-size:.85rem;margin-top:6px">💁 已解答：${q.answer}</div>`
+        : `<div style="margin-top:6px;display:flex;gap:8px">
+             <input id="ans-${q.id}" placeholder="输入解答内容..." style="margin-bottom:0">
+             <button class="btn sm" style="flex:0 0 auto" onclick="answerQa(${q.id})">解答</button>
+           </div>`}
+    </div>`).join('');
+}
+async function answerQa(id) {
+  const answer = document.getElementById('ans-' + id).value.trim();
+  if (!answer) { alert('请输入解答内容'); return; }
+  const r = await api(`/api/admin/qa/answer?id=${id}&answer=${encodeURIComponent(answer)}`, { method: 'POST' });
+  alert(r.msg); loadQa();
+}
+
+//未登录（无身份或无令牌）直接跳登录页；已登录才初始化，避免拿 null 取属性报错
+if (staff && token) {
+  document.getElementById('staffArea').innerHTML =
+    `🖥️ 当前登录：${staff.name}（${staff.account}） <a href="javascript:logoutStaff()" style="color:#fff;margin-left:8px">退出登录</a>`;
+  //刷新后停在刷新前的那个栏目，而不是无条件回到统计报表
+  activate(location.hash.slice(1) || 'stats');
+} else {
+  location.href = '/login.html?role=admin';
+}
+</script>
+</body>
+</html>

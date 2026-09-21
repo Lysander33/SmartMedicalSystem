@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.SysUserMapper">
+    <select id="selectByUsername" resultType="com.example.medical.entity.SysUser">
+        select * from sys_user where username=#{username}
+    </select>
+    <select id="selectByRoleAndRefId" resultType="com.example.medical.entity.SysUser">
+        select * from sys_user where role=#{role} and ref_id=#{refId}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user(username,password,role,ref_id,name,status,create_time)
+        values(#{username},#{password},#{role},#{refId},#{name},#{status},now())
+    </insert>
+    <update id="updatePassword">
+        update sys_user set password=#{password} where role=#{role} and ref_id=#{refId}
+    </update>
+    <update id="updateStatus">
+        update sys_user set status=#{status} where role=#{role} and ref_id=#{refId}
+    </update>
+    <update id="updateName">
+        update sys_user set name=#{name} where role=#{role} and ref_id=#{refId}
+    </update>
+</mapper>

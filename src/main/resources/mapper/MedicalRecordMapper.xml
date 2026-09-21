@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.MedicalRecordMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into medical_record(patient_id,visitor_id,visitor_name,doctor_id,doctor_name,dept_name,
+        type,registration_id,consultation_id,diagnosis,advice,create_time)
+        values(#{patientId},#{visitorId},#{visitorName},#{doctorId},#{doctorName},#{deptName},
+        #{type},#{registrationId},#{consultationId},#{diagnosis},#{advice},now())
+    </insert>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.MedicalRecord">
+        select * from medical_record where patient_id=#{patientId} order by id desc
+    </select>
+    <select id="selectByVisitorId" resultType="com.example.medical.entity.MedicalRecord">
+        select * from medical_record where visitor_id=#{visitorId} order by id desc
+    </select>
+</mapper>

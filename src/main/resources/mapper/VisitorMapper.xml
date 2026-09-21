@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.VisitorMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into visitor(patient_id,name,sex,age,id_card,phone)
+        values(#{patientId},#{name},#{sex},#{age},#{idCard},#{phone})
+    </insert>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.Visitor">
+        select * from visitor where patient_id=#{patientId} order by id
+    </select>
+    <select id="selectById" resultType="com.example.medical.entity.Visitor">
+        select * from visitor where id=#{id}
+    </select>
+    <update id="update">
+        update visitor set name=#{name},sex=#{sex},age=#{age},id_card=#{idCard},phone=#{phone} where id=#{id}
+    </update>
+    <delete id="delete">
+        delete from visitor where id=#{id}
+    </delete>
+    <select id="countByPatientId" resultType="java.lang.Integer">
+        select count(*) from visitor where patient_id=#{patientId}
+    </select>
+</mapper>

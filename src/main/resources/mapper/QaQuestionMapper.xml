@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.QaQuestionMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into qa_question(patient_id,patient_name,content,status,create_time)
+        values(#{patientId},#{patientName},#{content},'待回复',now())
+    </insert>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.QaQuestion">
+        select * from qa_question where patient_id=#{patientId} order by id desc
+    </select>
+    <select id="selectAll" resultType="com.example.medical.entity.QaQuestion">
+        select * from qa_question order by id desc
+    </select>
+    <update id="answer">
+        update qa_question set answer=#{answer},status='已回复',answer_time=now() where id=#{id}
+    </update>
+</mapper>

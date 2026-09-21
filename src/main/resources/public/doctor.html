@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧医疗就诊系统 - 医生端</title>
+<style>
+:root{--brand:#15803d;--brand-dark:#166534;--brand-light:#e8f7ee;--ink:#1a3a2a;--muted:#6b7f72;--line:#e0ebe4;--bg:#f2f7f4}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+body{background:var(--bg);min-height:100vh;color:var(--ink)}
+.topbar{background:rgba(22,101,52,.97);backdrop-filter:blur(8px);color:#fff;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 14px rgba(22,101,52,.3)}
+.topbar b{font-size:1.12rem;letter-spacing:1px}
+.topbar a{color:#e8f7ee;text-decoration:none;margin-left:14px;font-size:.85rem;opacity:.92;transition:.2s}
+.topbar a:hover{opacity:1;color:#fff}
+.main{max-width:1150px;margin:26px auto;padding:0 16px}
+.card{background:#fff;border-radius:16px;padding:24px 26px;margin-bottom:20px;box-shadow:0 4px 18px rgba(22,101,52,.07);border:1px solid #edf4ef;animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card h3{font-size:1.06rem;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.card h3::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,var(--brand),#22c55e)}
+.btn{display:inline-block;padding:9px 20px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-size:.88rem;cursor:pointer;transition:.22s;font-weight:500}
+.btn:hover{background:var(--brand-dark);transform:translateY(-1px);box-shadow:0 6px 14px rgba(21,128,61,.28)}
+.btn.orange{background:#ea580c}.btn.orange:hover{background:#c2410c}
+.btn.blue{background:#0369a1}.btn.blue:hover{background:#075985}
+.btn.gray{background:#94a3b8}.btn.gray:hover{background:#64748b}
+.btn.sm{padding:5px 13px;font-size:.8rem;border-radius:8px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:.9rem;outline:none;margin-bottom:10px;background:#fbfdfc;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(21,128,61,.1);background:#fff}
+label{font-size:.84rem;color:#48604f;display:block;margin-bottom:5px;font-weight:500}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.85rem;margin-top:8px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #eef4ef}
+th{background:#f0f8f3;color:#2c5240;font-weight:600;font-size:.82rem}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:.15s}
+tbody tr:hover{background:#f4faf6}
+.tag{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.74rem;font-weight:500}
+.tag.blue{background:#e0f2fe;color:#0369a1}.tag.green{background:#dcfce7;color:#15803d}
+.tag.orange{background:#ffedd5;color:#c2410c}.tag.red{background:#fee2e2;color:#b91c1c}.tag.gray{background:#f1f5f9;color:#64748b}
+.chat-box{border:1.5px solid var(--line);border-radius:14px;height:320px;overflow:auto;padding:16px;background:linear-gradient(180deg,#f6fbf8,#eef6f0)}
+.msg{max-width:74%;padding:10px 14px;border-radius:14px;margin-bottom:10px;font-size:.88rem;line-height:1.6;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.msg.doctor{background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.msg.patient{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.empty{text-align:center;color:#9db8a8;padding:36px 0;font-size:.88rem}
+.empty::before{content:"🗂️";display:block;font-size:2rem;margin-bottom:8px;opacity:.6}
+.muted{color:var(--muted);font-size:.8rem}
+footer{text-align:center;color:#9db8a8;font-size:.78rem;padding:30px 0}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><b>🩺 智慧医疗就诊系统 · 医生端工作台</b></div>
+  <div id="staffArea" style="font-size:.85rem"></div>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h3>👨‍⚕️ 当前医生</h3>
+    <div id="doctorCard"></div>
+  </div>
+
+  <div class="card">
+    <h3>🔔 接诊提醒（待接诊）</h3>
+    <div id="pendingList"></div>
+  </div>
+
+  <div class="card">
+    <h3>📅 挂号患者队列（已缴费 · 待就诊）</h3>
+    <button class="btn sm gray" onclick="loadRegQueue()">刷新</button>
+    <div id="regQueueList"></div>
+    <div id="visitPanel" style="display:none;margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+      <div id="visitWho" class="muted" style="margin-bottom:8px"></div>
+      <label>诊断结论</label>
+      <input id="visitDiagnosis" placeholder="如：急性支气管炎">
+      <label>医嘱建议（可选）</label>
+      <textarea id="visitAdvice" rows="2" placeholder="如：按时服药，多饮水，一周后复诊"></textarea>
+      <button class="btn sm" onclick="doFinishVisit()">确认完成就诊</button>
+      <button class="btn gray sm" onclick="document.getElementById('visitPanel').style.display='none'">取消</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💬 我的问诊</h3>
+    <div id="consultList"></div>
+  </div>
+
+  <div class="card" id="chatCard" style="display:none">
+    <h3>💬 问诊对话 <span id="chatMeta" class="tag blue"></span></h3>
+    <div id="chatPatient" class="muted" style="margin-bottom:8px"></div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="row" style="margin-top:10px">
+      <input id="chatInput" placeholder="回复患者..." style="margin-bottom:0">
+      <button class="btn" style="flex:0 0 auto" onclick="sendMsg()">发送</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn gray sm" onclick="refreshMsgs()">刷新消息</button>
+      <button class="btn blue sm" onclick="showHistory()">查看患者病历</button>
+      <button class="btn sm" onclick="openRxForm()">开具电子处方</button>
+      <button class="btn orange sm" onclick="finishConsult()">结束问诊</button>
+    </div>
+    <div id="finishPanel" style="display:none;margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:12px">
+      <label>问诊小结（诊疗意见、生活与用药建议）</label>
+      <textarea id="finishSummary" rows="2" placeholder="如：支气管炎急性发作，按时服药，多喝水，三天后复诊"></textarea>
+      <button class="btn orange sm" onclick="doFinishConsult()">确认结束问诊</button>
+      <button class="btn gray sm" onclick="document.getElementById('finishPanel').style.display='none'">取消</button>
+    </div>
+  </div>
+
+  <div class="card" id="rxCard" style="display:none">
+    <h3>📝 开具电子处方</h3>
+    <label>诊断结论</label>
+    <input id="rxDiagnosis" placeholder="如：急性上呼吸道感染">
+    <label>选择药品（从药品字典检索，自动校验库存）</label>
+    <div class="row">
+      <select id="rxMedicine"></select>
+      <input id="rxQty" type="number" placeholder="数量" value="1" style="max-width:90px">
+      <input id="rxDosage" placeholder="单次剂量 如:1粒">
+      <input id="rxFrequency" placeholder="频次 如:每日3次">
+      <input id="rxCourse" placeholder="疗程 如:3天">
+      <button class="btn sm" style="flex:0 0 auto" onclick="addRxItem()">加入处方</button>
+    </div>
+    <div id="rxItems"></div>
+    <button class="btn" onclick="submitRx()">提交处方（校验后流转药房）</button>
+    <div id="rxResult"></div>
+  </div>
+
+  <div class="card" id="historyCard" style="display:none">
+    <h3>📁 患者病历与历史记录</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="card">
+    <h3>🗂️ 我的处方历史</h3>
+    <button class="btn sm gray" onclick="loadMyRx()">刷新</button>
+    <div id="rxList"></div>
+  </div>
+</div>
+<footer>智慧医疗就诊系统 · 医生端 | 在线接诊 · 在线问诊 · 电子处方</footer>
+
+<script>
+let doctor = null;
+let currentConsult = null;
+let currentReg = null;
+let rxItems = [];
+let medicines = [];
+
+//所有请求统一带上 X-Token，令牌失效集中跳登录页
+async function api(url, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  if (token) headers['X-Token'] = token;
+  let r;
+  try {
+    const res = await fetch(url, Object.assign({}, opts, { headers }));
+    r = await res.json();
+  } catch (e) {
+    return { code: -1, msg: '网络异常：' + e.message };
+  }
+  if (r && r.code === 401) {
+    alert('登录状态已失效，请重新登录');
+    clearAuth();
+    location.href = '/login.html?role=doctor';
+    throw new Error('401');
+  }
+  return r;
+}
+//后端返回的是 ISO(UTC) 时间，统一转成本地时间显示（直接截字符串会差8小时甚至差一天）
+function fmtTime(d) {
+  if (!d) return '';
+  const t = new Date(d);
+  if (isNaN(t.getTime())) return String(d);
+  const p = n => String(n).padStart(2, '0');
+  return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
+}
+function fmtDate(d) { return fmtTime(d).substring(0, 10); }
+
+//统一登录：令牌与身份按角色分槽存（token_患者 / token_医生 ...），四个端互不覆盖
+const MY_ROLE = 'doctor';
+let token = localStorage.getItem('token_' + MY_ROLE) || '';
+let loginDoctor = token ? JSON.parse(localStorage.getItem('user_' + MY_ROLE) || 'null') : null;
+
+function clearAuth() {
+  localStorage.removeItem('token_' + MY_ROLE);
+  localStorage.removeItem('user_' + MY_ROLE);
+  ['token', 'user', 'role', 'patient', 'doctor', 'doctor_token', 'staff'].forEach(k => localStorage.removeItem(k));
+}
+async function logoutDoctor() {
+  try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+  clearAuth();
+  location.href = '/login.html?role=doctor';
+}
+if (loginDoctor) {
+  document.getElementById('staffArea').innerHTML =
+    `👨‍⚕️ 当前登录：${loginDoctor.name}（${loginDoctor.account}） <a href="javascript:logoutDoctor()" style="color:#fff;margin-left:8px">退出登录</a>`;
+}
+
+async function init() {
+  //医生身份锁定为当前登录账号，不可切换到其他医生
+  doctor = { id: loginDoctor.id, name: loginDoctor.name };
+  document.getElementById('doctorCard').innerHTML = `
+    <div style="display:flex;gap:14px;align-items:center">
+      <div class="avatar" style="width:52px;height:52px;border-radius:50%;background:#15803d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:600">${loginDoctor.name[0]}</div>
+      <div>
+        <b style="font-size:1.05rem">${loginDoctor.name}</b>
+        <span class="tag green" style="margin-left:6px">${loginDoctor.title || ''}</span>
+        <span class="tag blue">${loginDoctor.deptName || ''}</span>
+        <div class="muted" style="margin-top:4px">工号 ${loginDoctor.account} ｜ 挂号费 ￥${loginDoctor.fee ?? '-'} ｜ 当前状态：${loginDoctor.onlineStatus || '在线'}</div>
+        <div class="muted">擅长：${loginDoctor.specialty || '常见病诊治'}</div>
+      </div>
+    </div>`;
+  const mr = await api('/api/doctorwork/medicines');
+  medicines = mr.data || [];
+  document.getElementById('rxMedicine').innerHTML = medicines.map(m =>
+    `<option value="${m.id}">${m.name} ${m.spec}（￥${m.price} 库存${m.stock}）</option>`).join('');
+  loadPending(); loadConsults(); loadMyRx(); loadRegQueue();
+}
+
+// ==================== 挂号患者队列（门诊） ====================
+async function loadRegQueue() {
+  const r = await api('/api/doctorwork/reg/queue');
+  const box = document.getElementById('regQueueList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无已缴费待就诊的挂号</div>'; return; }
+  box.innerHTML = '<table><tr><th>挂号单号</th><th>就诊人</th><th>就诊日期</th><th>时段</th><th>挂号费</th><th>缴费时间</th><th>操作</th></tr>' +
+    r.data.map(g => `<tr><td>${g.regNo}</td><td>${g.visitorName}</td><td>${fmtDate(g.workDate)}</td>
+      <td>${g.timeSlot}</td><td>￥${g.fee}</td><td>${fmtTime(g.payTime)}</td>
+      <td><button class="btn sm" onclick="openVisit(${g.id}, '${g.visitorName}')">完成就诊</button></td></tr>`).join('') + '</table>';
+}
+function openVisit(id, name) {
+  currentReg = { id, name };
+  document.getElementById('visitWho').textContent = `正在为【${name}】填写门诊病历`;
+  document.getElementById('visitPanel').style.display = 'block';
+  document.getElementById('visitDiagnosis').focus();
+}
+async function doFinishVisit() {
+  if (!currentReg) return;
+  const diagnosis = document.getElementById('visitDiagnosis').value.trim();
+  const advice = document.getElementById('visitAdvice').value.trim();
+  if (!diagnosis) { alert('请填写诊断结论'); return; }
+  const r = await api(`/api/doctorwork/visit/finish?registrationId=${currentReg.id}&diagnosis=${encodeURIComponent(diagnosis)}&advice=${encodeURIComponent(advice)}`, { method: 'POST' });
+  alert(r.msg);
+  if (r.code === 200) {
+    document.getElementById('visitPanel').style.display = 'none';
+    document.getElementById('visitDiagnosis').value = '';
+    document.getElementById('visitAdvice').value = '';
+    currentReg = null;
+  }
+  loadRegQueue();
+}
+
+async function loadPending() {
+  const r = await api('/api/doctorwork/pending');
+  const box = document.getElementById('pendingList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无待接诊的咨询</div>'; return; }
+  box.innerHTML = '<table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>发起时间</th><th>操作</th></tr>' +
+    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${c.type}</td>
+      <td>${(c.description || '').substring(0, 25)}</td><td>${fmtTime(c.createTime)}</td>
+      <td><button class="btn sm" onclick="accept(${c.id})">接诊</button></td></tr>`).join('') + '</table>';
+}
+async function accept(id) {
+  const r = await api('/api/doctorwork/accept?consultationId=' + id, { method: 'POST' });
+  alert(r.msg);
+  loadPending(); loadConsults();
+  if (r.code === 200) openChat(id);
+}
+
+async function loadConsults() {
+  const r = await api('/api/doctorwork/consultations');
+  const box = document.getElementById('consultList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无问诊</div>'; return; }
+  const color = { '待接诊': 'orange', '问诊中': 'blue', '已结束': 'green' };
+  box.innerHTML = '<table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>状态</th><th>问诊小结</th><th>操作</th></tr>' +
+    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${c.type}</td>
+      <td>${(c.description || '').substring(0, 20)}</td>
+      <td><span class="tag ${color[c.status]}">${c.status}</span></td>
+      <td>${c.summary ? c.summary.substring(0, 15) : '-'}</td>
+      <td><button class="btn sm blue" onclick="openChat(${c.id})">打开</button></td></tr>`).join('') + '</table>';
+}
+
+async function openChat(id) {
+  currentConsult = id;
+  document.getElementById('chatCard').style.display = 'block';
+  const d = await api('/api/consult/detail?id=' + id);
+  if (d.data) {
+    document.getElementById('chatMeta').textContent = d.data.status;
+    document.getElementById('chatPatient').textContent =
+      `就诊人：${d.data.visitorName} ｜ 问诊类型：${d.data.type} ｜ 发起时间：${fmtTime(d.data.createTime)}`;
+  }
+  refreshMsgs();
+  document.getElementById('chatCard').scrollIntoView({ behavior: 'smooth' });
+}
+async function refreshMsgs() {
+  if (!currentConsult) return;
+  const r = await api('/api/doctorwork/messages?consultationId=' + currentConsult);
+  const box = document.getElementById('chatBox');
+  box.innerHTML = (r.data || []).map(m =>
+    `<div class="msg ${m.sender}">${m.content}<div class="muted" style="font-size:.7rem;opacity:.7">${m.sender === 'doctor' ? '我' : '患者'} ${fmtTime(m.createTime)}</div></div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+async function sendMsg() {
+  const content = document.getElementById('chatInput').value.trim();
+  if (!content) return;
+  await api('/api/doctorwork/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ consultationId: currentConsult, content }) });
+  document.getElementById('chatInput').value = '';
+  refreshMsgs();
+}
+function finishConsult() {
+  if (!currentConsult) { alert('请先打开一个问诊'); return; }
+  document.getElementById('finishPanel').style.display = 'block';
+  document.getElementById('finishSummary').focus();
+}
+async function doFinishConsult() {
+  const summary = document.getElementById('finishSummary').value.trim();
+  if (!summary) { alert('请填写问诊小结'); return; }
+  const r = await api(`/api/doctorwork/finish?consultationId=${currentConsult}&summary=${encodeURIComponent(summary)}`, { method: 'POST' });
+  alert(r.msg);
+  if (r.code === 200) {
+    document.getElementById('finishPanel').style.display = 'none';
+    document.getElementById('finishSummary').value = '';
+  }
+  loadConsults(); refreshMsgs();
+}
+
+async function showHistory() {
+  const d = await api('/api/consult/detail?id=' + currentConsult);
+  if (!d.data) return;
+  const r = await api('/api/doctorwork/patient/history?visitorId=' + d.data.visitorId);
+  const box = document.getElementById('historyList');
+  document.getElementById('historyCard').style.display = 'block';
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">该患者暂无历史病历</div>'; return; }
+  box.innerHTML = '<table><tr><th>时间</th><th>科室/医生</th><th>诊断</th><th>医嘱建议</th></tr>' +
+    r.data.map(m => `<tr><td>${fmtTime(m.createTime)}</td><td>${m.deptName || ''}/${m.doctorName}</td>
+      <td>${m.diagnosis}</td><td>${m.advice || ''}</td></tr>`).join('') + '</table>';
+  document.getElementById('historyCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ==================== 电子处方 ====================
+function openRxForm() {
+  if (!currentConsult) { alert('请先打开一个问诊'); return; }
+  rxItems = [];
+  renderRxItems();
+  document.getElementById('rxCard').style.display = 'block';
+  document.getElementById('rxCard').scrollIntoView({ behavior: 'smooth' });
+}
+function addRxItem() {
+  const sel = document.getElementById('rxMedicine');
+  const mid = Number(sel.value);
+  const qty = Number(document.getElementById('rxQty').value);
+  if (!qty || qty <= 0) { alert('请输入正确的数量'); return; }
+  const m = medicines.find(x => x.id === mid);
+  if (rxItems.some(x => x.medicineId === mid)) { alert('该药品已在处方中'); return; }
+  rxItems.push({
+    medicineId: mid, medicineName: m.name,
+    quantity: qty,
+    dosage: document.getElementById('rxDosage').value,
+    frequency: document.getElementById('rxFrequency').value,
+    course: document.getElementById('rxCourse').value
+  });
+  renderRxItems();
+}
+function removeRxItem(mid) {
+  rxItems = rxItems.filter(x => x.medicineId !== mid);
+  renderRxItems();
+}
+function renderRxItems() {
+  const box = document.getElementById('rxItems');
+  if (rxItems.length === 0) { box.innerHTML = '<div class="empty">尚未添加药品</div>'; return; }
+  box.innerHTML = '<table><tr><th>药品</th><th>数量</th><th>单次剂量</th><th>频次</th><th>疗程</th><th>操作</th></tr>' +
+    rxItems.map(i => `<tr><td>${i.medicineName}</td><td>${i.quantity}</td><td>${i.dosage}</td>
+      <td>${i.frequency}</td><td>${i.course}</td>
+      <td><button class="btn sm orange" onclick="removeRxItem(${i.medicineId})">移除</button></td></tr>`).join('') + '</table>';
+}
+async function submitRx() {
+  const diagnosis = document.getElementById('rxDiagnosis').value.trim();
+  if (!diagnosis) { alert('请填写诊断结论'); return; }
+  if (rxItems.length === 0) { alert('请至少添加一种药品'); return; }
+  const r = await api('/api/doctorwork/rx/create', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ consultationId: currentConsult, diagnosis, items: rxItems }) });
+  if (r.code !== 200) { alert('处方校验未通过：' + r.msg); return; }
+  alert('处方提交成功！处方编号：' + r.data.rxNo + '，合计金额￥' + r.data.totalAmount + '，已流转至药房，等待患者缴费。');
+  document.getElementById('rxCard').style.display = 'none';
+  loadMyRx();
+}
+async function loadMyRx() {
+  const r = await api('/api/doctorwork/rx/my');
+  const box = document.getElementById('rxList');
+  if (!r.data || r.data.length === 0) { box.innerHTML = '<div class="empty">暂无处方</div>'; return; }
+  const color = { '待缴费': 'orange', '待发药': 'blue', '已完成': 'green', '已作废': 'gray' };
+  box.innerHTML = '<table><tr><th>处方编号</th><th>就诊人</th><th>诊断</th><th>药品数</th><th>金额</th><th>状态</th><th>药房备注</th><th>操作</th></tr>' +
+    r.data.map(p => `<tr><td>${p.rxNo}</td><td>${p.visitorName}</td><td>${(p.diagnosis || '').substring(0, 12)}</td>
+      <td>${(p.items || []).length}种</td><td>￥${p.totalAmount}</td>
+      <td><span class="tag ${color[p.status]}">${p.status}</span></td><td>${p.remark || '-'}</td>
+      <td>${p.status === '待缴费' ? `<button class="btn sm orange" onclick="cancelRx(${p.id})">作废</button>` : ''}</td></tr>`).join('') + '</table>';
+}
+async function cancelRx(id) {
+  if (!confirm('确认作废该处方？')) return;
+  const r = await api('/api/doctorwork/rx/cancel?rxId=' + id, { method: 'POST' });
+  alert(r.msg);
+  loadMyRx();
+}
+
+//未登录（无身份或无令牌）直接跳登录页；已登录才初始化，
+//否则 init() 会拿 null 取属性抛 TypeError，页面表现为空白
+if (loginDoctor && token) {
+  init();
+} else {
+  location.href = '/login.html?role=doctor';
+}
+</script>
+</body>
+</html>

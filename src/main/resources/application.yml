@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: SmartMedicalSystem
+
+  # Spring自身的上传大小限制
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  # 数据库连接配置（使用druid连接池）
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/medical?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 15
+      max-wait: 60000
+
+# mybatis框架配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    # 显示sql日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 注意：不要开 return-instance-for-empty-row，它会把"全 NULL 行"变成非 null 对象，
+    # 从而掩盖 selectById 查不到记录的问题（本项目的 null 判断依赖它返回 null）
+    # 数据库下划线字段自动映射到实体驼峰属性
+    map-underscore-to-camel-case: true
+
+# springdoc在线接口文档配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

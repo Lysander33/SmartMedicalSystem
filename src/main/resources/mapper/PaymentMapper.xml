@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.PaymentMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into payment(order_no,patient_id,biz_type,biz_id,title,amount,status,create_time)
+        values(#{orderNo},#{patientId},#{bizType},#{bizId},#{title},#{amount},'待支付',now())
+    </insert>
+    <select id="selectById" resultType="com.example.medical.entity.Payment">
+        select * from payment where id=#{id}
+    </select>
+    <select id="selectByPatientId" resultType="com.example.medical.entity.Payment">
+        select * from payment where patient_id=#{patientId} order by id desc
+    </select>
+    <select id="selectPendingByPatientId" resultType="com.example.medical.entity.Payment">
+        select * from payment where patient_id=#{patientId} and status='待支付' order by id desc
+    </select>
+    <select id="selectByBiz" resultType="com.example.medical.entity.Payment">
+        select * from payment where biz_type=#{bizType} and biz_id=#{bizId}
+    </select>
+    <select id="selectAll" resultType="com.example.medical.entity.Payment">
+        select * from payment order by id desc
+    </select>
+    <update id="pay">
+        update payment set status='已支付',pay_type=#{payType},pay_time=now(),ticket_no=#{ticketNo}
+        where id=#{id} and status='待支付'
+    </update>
+    <update id="cancel">
+        update payment set status='已取消' where id=#{id} and status='待支付'
+    </update>
+    <update id="refund">
+        update payment set status='已退款' where id=#{id} and status='已支付'
+    </update>
+</mapper>

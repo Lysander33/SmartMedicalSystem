@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.medical.mapper.MedicineMapper">
+    <select id="selectAll" resultType="com.example.medical.entity.Medicine">
+        select * from medicine order by id
+    </select>
+    <select id="selectOnShelf" resultType="com.example.medical.entity.Medicine">
+        select * from medicine where status='上架' order by id
+    </select>
+    <select id="selectById" resultType="com.example.medical.entity.Medicine">
+        select * from medicine where id=#{id}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into medicine(name,generic_name,spec,category,manufacturer,price,stock,warn_stock,insurance_type,status)
+        values(#{name},#{genericName},#{spec},#{category},#{manufacturer},#{price},#{stock},#{warnStock},#{insuranceType},'上架')
+    </insert>
+    <!-- 动态 set：未传的字段不覆盖。
+         旧写法是全字段覆盖，未传的列会被写成 NULL，而 stock 一旦为 NULL，
+         reduceStock 的 stock>=#{quantity} 恒为 false，该药品就再也发不出药了。 -->
+    <update id="update">
+        update medicine
+        <set>
+            <if test="name != null and name != ''">name=#{name},</if>
+            <if test="genericName != null">generic_name=#{genericName},</if>
+            <if test="spec != null">spec=#{spec},</if>
+            <if test="category != null">category=#{category},</if>
+            <if test="manufacturer != null">manufacturer=#{manufacturer},</if>
+            <if test="price != null">price=#{price},</if>
+            <if test="stock != null">stock=#{stock},</if>
+            <if test="warnStock != null">warn_stock=#{warnStock},</if>
+            <if test="insuranceType != null">insurance_type=#{insuranceType},</if>
+        </set>
+        where id=#{id}
+    </update>
+    <update id="updateStatus">
+        update medicine set status=#{status} where id=#{id}
+    </update>
+    <update id="reduceStock">
+        update medicine set stock=stock-#{quantity} where id=#{id} and stock>=#{quantity}
+    </update>
+    <update id="addStock">
+        update medicine set stock=stock+#{quantity} where id=#{id}
+    </update>
+</mapper>
