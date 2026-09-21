@@ -26,6 +26,10 @@ window.SM = window.SM || {};
    * cfg.alertOn401    401 时是否 alert（默认 true，患者端为 false）
    * cfg.throwOn401    401 之后是否抛异常（默认 true，患者端为 false，它会继续往下 return）
    * cfg.catchNetwork  是否把网络异常吞成 {code:-1}（默认 true，患者端为 false，它向上抛）
+   *
+   * api(url, opts) 另认一个 opts.silent401：单次请求接管 401 处理。
+   * 患者端首页未登录也能浏览，启动时要用 /api/auth/me 探一次令牌真伪，
+   * 那一次 401 不该把人踢到登录页；四个员工端不会传这个选项。
    */
   SM.createSession = function (cfg) {
     cfg = cfg || {};
@@ -82,9 +86,12 @@ window.SM = window.SM || {};
         }
 
         if (r && r.code === 401) {
-          if (alertOn401) alert('登录状态已失效，请重新登录');
+          //身份一律作废，但「提示 + 跳转」可以被单次请求接管（silent401）
           S.clearAuth();
-          if (replaceOn401) location.replace(redirect); else location.href = redirect;
+          if (!opts.silent401) {
+            if (alertOn401) alert('登录状态已失效，请重新登录');
+            if (replaceOn401) location.replace(redirect); else location.href = redirect;
+          }
           if (throwOn401) throw new Error('401');
         }
         return r;
