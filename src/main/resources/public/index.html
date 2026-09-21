@@ -4,22 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智慧医疗就诊系统 - 患者端</title>
+<!-- 门禁放在样式表之前：未登录直接跳登录页，连样式都不必下载，也不会闪出半个页面 -->
+<script src="/js/auth.js"></script>
+<script>SM.requireLogin('patient');</script>
 <link rel="stylesheet" href="/css/app.css">
 <style>
 /* 本页独占：横幅 + 横向导航 + 医生卡片 + 预分诊结果 + 个人中心/问答条目 */
-.staff-link{border:1px solid rgba(255,255,255,.5);border-radius:var(--r-full);padding:6px var(--sp-3)}
 /* ===== 横幅 ===== */
-.hero{background:linear-gradient(120deg,var(--primary-dark) 0%,var(--primary) 55%,var(--blue-500) 100%);color:#fff;padding:var(--sp-10) var(--sp-6) 78px;position:relative;overflow:hidden}
+.hero{background:linear-gradient(120deg,var(--primary-dark) 0%,var(--primary) 55%,var(--blue-500) 100%);color:#fff;padding:var(--sp-8) var(--sp-6) 68px;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;width:380px;height:380px;border-radius:50%;background:rgba(255,255,255,.07);top:-130px;right:8%}
 .hero::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.05);bottom:-80px;left:6%}
 .hero .inner{max-width:1100px;margin:0 auto;position:relative}
-.hero h1{font-size:var(--fs-3xl);letter-spacing:1px;margin-bottom:var(--sp-3)}
-.hero p{opacity:.9;font-size:var(--fs-md);line-height:1.9;max-width:640px}
-.hero .chips{margin-top:var(--sp-5);display:flex;gap:var(--sp-3);flex-wrap:wrap}
+.hero h1{font-size:var(--fs-2xl);letter-spacing:1px;margin-bottom:var(--sp-2)}
+.hero p{opacity:.9;font-size:var(--fs-base);line-height:1.8;max-width:640px}
+.hero .chips{margin-top:var(--sp-4);display:flex;gap:var(--sp-2);flex-wrap:wrap}
 .hero .chips span{background:rgba(255,255,255,.16);backdrop-filter:blur(4px);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-full);font-size:var(--fs-sm);display:inline-flex;align-items:center;gap:var(--sp-1)}
+/* 卡片头部里的窄下拉（科室筛选），别让它占满整行 */
+.ctrl{max-width:200px;min-width:0}
 /* ===== 横向导航（上浮压在横幅下沿） ===== */
-.nav{max-width:1100px;margin:-34px auto 0;background:var(--surface);border-radius:var(--r-2xl);box-shadow:var(--sh-lg);display:flex;justify-content:space-around;padding:var(--sp-3) var(--sp-2);position:relative;z-index:var(--z-nav);flex-wrap:wrap}
-.nav button{border:none;background:none;padding:var(--sp-3);font-size:var(--fs-md);color:var(--gray-500);cursor:pointer;border-radius:var(--r-lg);display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);min-width:88px;font-family:inherit;font-weight:500;transition:background var(--dur),color var(--dur),transform var(--dur)}
+.nav{max-width:1100px;margin:-30px auto 0;background:var(--surface);border-radius:var(--r-2xl);box-shadow:var(--sh-lg);display:flex;justify-content:space-around;padding:var(--sp-2) var(--sp-2);position:relative;z-index:var(--z-nav);flex-wrap:wrap}
+.nav button{border:none;background:none;padding:var(--sp-2) var(--sp-3);font-size:var(--fs-base);color:var(--gray-500);cursor:pointer;border-radius:var(--r-lg);display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);min-width:88px;font-family:inherit;font-weight:500;transition:background var(--dur),color var(--dur),transform var(--dur)}
 .nav button .ico{width:1.35em;height:1.35em}
 .nav button.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
 .nav button:hover:not(.active){background:var(--gray-100);color:var(--primary);transform:translateY(-1px)}
@@ -40,16 +44,13 @@
 /* ===== 个人中心 / 问答条目 ===== */
 .mine-account{font-size:var(--fs-md);color:var(--gray-600);margin-bottom:var(--sp-3)}
 .hr-dash{margin:var(--sp-4) 0;border:none;border-top:1px dashed var(--line)}
-.qa-item{padding:var(--sp-3) 0;border-bottom:1px dashed var(--line)}
-.qa-item:last-child{border-bottom:none}
 .qa-ans{color:var(--primary-dark);font-size:var(--fs-base);margin-top:var(--sp-2)}
-.msg-time{font-size:var(--fs-xs);opacity:.75}
 </style>
 </head>
 <body data-role="patient">
 <div class="topbar">
   <div class="logo"><i data-lucide="heart-pulse" class="ico"></i>智慧医疗就诊系统 <span class="badge">患者端</span></div>
-  <div><span id="userArea"></span><a class="staff-link" href="/login.html">医护 / 管理员登录</a></div>
+  <div id="userArea"></div>
 </div>
 
 <div class="hero">
@@ -82,9 +83,11 @@
   <!-- 首页 -->
   <div class="section active" id="s-home">
     <div class="card">
-      <h3><i data-lucide="stethoscope" class="ico"></i>医生团队</h3>
-      <div class="row" style="margin-bottom:var(--sp-4)">
-        <select id="homeDept" onchange="loadHomeDoctors()"><option value="">全部科室</option></select>
+      <div class="card-head">
+        <h3><i data-lucide="stethoscope" class="ico"></i>医生团队</h3>
+        <div class="card-actions">
+          <select id="homeDept" class="ctrl" onchange="loadHomeDoctors()"><option value="">全部科室</option></select>
+        </div>
       </div>
       <div class="doctor-grid" id="homeDoctors"></div>
     </div>
@@ -93,7 +96,10 @@
   <!-- AI预分诊 -->
   <div class="section" id="s-triage">
     <div class="card">
-      <h3><i data-lucide="sparkles" class="ico"></i>AI预分诊 <span class="tag tag--info">仅供参考，不构成诊断</span></h3>
+      <div class="card-head">
+        <h3><i data-lucide="sparkles" class="ico"></i>AI预分诊</h3>
+        <div class="card-actions"><span class="tag tag--info">仅供参考，不构成诊断</span></div>
+      </div>
       <label>就诊人</label><select id="triageVisitor"></select>
       <label>症状部位</label>
       <select id="triagePart">
@@ -108,7 +114,9 @@
       <div id="triageResult"></div>
     </div>
     <div class="card">
-      <h3><i data-lucide="history" class="ico"></i>历史分诊记录</h3>
+      <div class="card-head">
+        <h3><i data-lucide="history" class="ico"></i>历史分诊记录</h3>
+      </div>
       <div id="triageHistory"></div>
     </div>
   </div>
@@ -116,7 +124,9 @@
   <!-- 预约挂号 -->
   <div class="section" id="s-reg">
     <div class="card">
-      <h3><i data-lucide="calendar-check" class="ico"></i>预约挂号</h3>
+      <div class="card-head">
+        <h3><i data-lucide="calendar-check" class="ico"></i>预约挂号</h3>
+      </div>
       <div class="row">
         <div><label>第一步：选择科室</label><select id="regDept" onchange="loadRegDoctors()"><option value="">请选择科室</option></select></div>
         <div><label>第二步：选择医生</label><select id="regDoctor" onchange="loadRegSchedules()"><option value="">请先选择科室</option></select></div>
@@ -127,7 +137,9 @@
       <div id="regResult"></div>
     </div>
     <div class="card">
-      <h3><i data-lucide="clipboard-list" class="ico"></i>我的挂号记录</h3>
+      <div class="card-head">
+        <h3><i data-lucide="clipboard-list" class="ico"></i>我的挂号记录</h3>
+      </div>
       <div id="regList"></div>
     </div>
   </div>
@@ -135,7 +147,9 @@
   <!-- 在线咨询 -->
   <div class="section" id="s-consult">
     <div class="card">
-      <h3><i data-lucide="message-square" class="ico"></i>发起在线咨询</h3>
+      <div class="card-head">
+        <h3><i data-lucide="message-square" class="ico"></i>发起在线咨询</h3>
+      </div>
       <div class="row">
         <div><label>选择医生</label><select id="consultDoctor"></select></div>
         <div><label>问诊类型</label><select id="consultType"><option>图文</option><option>语音</option><option>视频</option></select></div>
@@ -147,28 +161,36 @@
       <p class="muted" style="margin-top:var(--sp-3)"><i data-lucide="circle-help" class="ico"></i> 在线咨询适用于常见病、慢性病复诊；急危重症请及时线下就医。</p>
     </div>
     <div class="card">
-      <h3><i data-lucide="messages-square" class="ico"></i>我的问诊</h3>
+      <div class="card-head">
+        <h3><i data-lucide="messages-square" class="ico"></i>我的问诊</h3>
+      </div>
       <div id="consultList"></div>
     </div>
     <div class="card" id="chatCard" style="display:none">
-      <h3><i data-lucide="message-square" class="ico"></i>问诊对话 <span id="chatStatus"></span></h3>
+      <div class="card-head">
+        <h3><i data-lucide="message-square" class="ico"></i>问诊对话 <span id="chatStatus"></span></h3>
+        <div class="card-actions"><button class="btn btn--neutral sm" onclick="refreshMsgs()">刷新消息</button></div>
+      </div>
       <div class="chat-box" id="chatBox"></div>
       <div class="row" style="margin-top:var(--sp-3);align-items:center">
         <input id="chatInput" placeholder="输入消息..." style="margin-bottom:0">
         <button class="btn shrink" onclick="sendMsg()">发送</button>
       </div>
-      <button class="btn btn--neutral sm" style="margin-top:var(--sp-3)" onclick="refreshMsgs()">刷新消息</button>
     </div>
   </div>
 
   <!-- 在线缴费 -->
   <div class="section" id="s-pay">
     <div class="card">
-      <h3><i data-lucide="wallet" class="ico"></i>待缴清单</h3>
+      <div class="card-head">
+        <h3><i data-lucide="wallet" class="ico"></i>待缴清单</h3>
+      </div>
       <div id="payPending"></div>
     </div>
     <div class="card">
-      <h3><i data-lucide="receipt" class="ico"></i>缴费记录 / 电子票夹</h3>
+      <div class="card-head">
+        <h3><i data-lucide="receipt" class="ico"></i>缴费记录 / 电子票夹</h3>
+      </div>
       <div id="payRecords"></div>
     </div>
   </div>
@@ -176,11 +198,15 @@
   <!-- 我的记录 -->
   <div class="section" id="s-records">
     <div class="card">
-      <h3><i data-lucide="clipboard-list" class="ico"></i>记录查询</h3>
-      <div class="row" style="margin-bottom:var(--sp-4)">
-        <button class="btn sm" onclick="loadRecords('rx')">我的处方</button>
-        <button class="btn btn--neutral sm" onclick="loadRecords('medical')">病历记录</button>
-        <button class="btn btn--neutral sm" onclick="loadRecords('triage')">预分诊记录</button>
+      <div class="card-head">
+        <h3><i data-lucide="clipboard-list" class="ico"></i>记录查询</h3>
+        <div class="card-actions">
+          <div class="segmented" id="recTabs">
+            <button class="active" data-rec="rx" onclick="loadRecords('rx')">我的处方</button>
+            <button data-rec="medical" onclick="loadRecords('medical')">病历记录</button>
+            <button data-rec="triage" onclick="loadRecords('triage')">预分诊记录</button>
+          </div>
+        </div>
       </div>
       <div id="recordsList"></div>
     </div>
@@ -189,13 +215,17 @@
   <!-- 在线问答 -->
   <div class="section" id="s-qa">
     <div class="card">
-      <h3><i data-lucide="circle-help" class="ico"></i>在线问答</h3>
+      <div class="card-head">
+        <h3><i data-lucide="circle-help" class="ico"></i>在线问答</h3>
+      </div>
       <label>向医院咨询问题</label>
       <textarea id="qaContent" rows="2" placeholder="请输入您的问题..."></textarea>
       <button class="btn" onclick="askQuestion()">提交问题</button>
     </div>
     <div class="card">
-      <h3><i data-lucide="messages-square" class="ico"></i>我的问答</h3>
+      <div class="card-head">
+        <h3><i data-lucide="messages-square" class="ico"></i>我的问答</h3>
+      </div>
       <div id="qaList"></div>
     </div>
   </div>
@@ -203,7 +233,9 @@
   <!-- 个人中心 -->
   <div class="section" id="s-mine">
     <div class="card">
-      <h3><i data-lucide="user" class="ico"></i>个人信息（实名信息）</h3>
+      <div class="card-head">
+        <h3><i data-lucide="user" class="ico"></i>个人信息（实名信息）</h3>
+      </div>
       <div id="mineInfo"></div>
       <label>姓名</label><input id="mineName">
       <label>身份证号</label><input id="mineIdCard" placeholder="用于挂号、医保凭证核验">
@@ -211,7 +243,10 @@
       <button class="btn" onclick="saveMine()">保存资料</button>
     </div>
     <div class="card">
-      <h3><i data-lucide="users" class="ico"></i>就诊人管理 <span class="muted">（最多5人，可为家人挂号）</span></h3>
+      <div class="card-head">
+        <h3><i data-lucide="users" class="ico"></i>就诊人管理</h3>
+        <div class="card-actions"><span class="muted">最多5人，可为家人挂号</span></div>
+      </div>
       <div id="visitorList"></div>
       <hr class="hr-dash">
       <div class="row">
@@ -230,26 +265,7 @@
 </div>
 <footer>智慧医疗就诊系统 · 患者端 ｜ SpringBoot + MyBatis + MySQL + Druid</footer>
 
-<!-- 登录/注册弹窗 -->
-<div class="modal-mask" id="loginMask" onclick="if(event.target===this)closeLogin()">
-  <div class="modal">
-    <span class="modal-close" onclick="closeLogin()" title="关闭">×</span>
-    <h3 id="loginTitle">用户登录</h3>
-    <label>手机号</label><input id="loginPhone" placeholder="演示账号 13800000001">
-    <label>密码</label><input id="loginPwd" type="password" placeholder="演示密码 123456">
-    <div id="regExtra" style="display:none">
-      <label>姓名</label><input id="regName" placeholder="选填">
-    </div>
-    <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-2)">
-      <button class="btn" id="loginBtn" onclick="doLogin()">登录</button>
-      <button class="btn btn--neutral" onclick="toggleReg()" id="toggleBtn">没有账号？去注册</button>
-    </div>
-    <p class="muted" style="margin-top:var(--sp-3)">登录后可使用预分诊、挂号、咨询、缴费等全部功能</p>
-  </div>
-</div>
-
 <script src="/js/lucide.min.js"></script>
-<script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
 <script>
 //登录身份：token 走请求头交给后端识别，user 是身份档案（仅用于展示）
@@ -258,14 +274,13 @@
 //不弹窗、不抛异常（跳转后仍继续 return）、不吞网络异常、401 用 replace 而非 href
 const S = SM.createSession({
   role: 'patient',
-  redirect: '/login.html',
+  redirect: '/login.html?role=patient',
   replaceOn401: true,
   alertOn401: false,
   throwOn401: false,
   catchNetwork: false
 });
 
-let isReg = false;
 let currentConsult = null;
 
 // ==================== 基础工具 ====================
@@ -273,46 +288,18 @@ function renderUserArea() {
   SM.renderTopbar({
     elId: 'userArea', user: S.user, icon: 'user',
     label: u => u.name,
-    loginFn: 'showLogin', loginText: '登录/注册',
     logoutFn: 'logout', logoutText: '退出'
   });
 }
-function needLogin() {
-  if (!S.user) { document.getElementById('loginMask').style.display = 'flex'; return true; }
-  return false;
-}
-function showLogin() { document.getElementById('loginMask').style.display = 'flex'; }
-function closeLogin() { document.getElementById('loginMask').style.display = 'none'; }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
 //退出登录要通知服务端作废令牌：旧写法只清 localStorage，令牌在服务端仍然有效
 async function logout() { S.logout(); }
-function toggleReg() {
-  isReg = !isReg;
-  document.getElementById('regExtra').style.display = isReg ? 'block' : 'none';
-  document.getElementById('loginTitle').textContent = isReg ? '用户注册' : '用户登录';
-  document.getElementById('loginBtn').textContent = isReg ? '注册并登录' : '登录';
-  document.getElementById('toggleBtn').textContent = isReg ? '已有账号？去登录' : '没有账号？去注册';
-}
-async function doLogin() {
-  const phone = document.getElementById('loginPhone').value.trim();
-  const password = document.getElementById('loginPwd').value;
-  if (!phone || !password) { alert('请输入手机号和密码'); return; }
-  const url = isReg ? '/api/patient/register' : '/api/patient/login';
-  const body = { phone, password };
-  if (isReg) body.name = document.getElementById('regName').value.trim();
-  const r = await S.api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (r.code !== 200) { alert(r.msg); return; }
-  if (isReg) { alert('注册成功，请登录'); toggleReg(); return; }
-  //登录返回统一结构：token + role + profile
-  S.save(r.data.token, r.data.profile);
-  document.getElementById('loginMask').style.display = 'none';
-  init();
-}
 
 // ==================== 导航切换 ====================
 //当前标签同步写进 URL 的 #（如 /#pay），刷新后按 # 恢复；不写的话刷新一定回到"首页"
 function loadSection(s) {
-  if (s === 'home') loadHomeDoctors();
+  //首页也得先拉科室：ensureDepts() 是唯一往 #homeDept 写选项的地方，
+  //以前只有挂号分区调它，所以首页那个下拉一直只有写死的"全部科室"一个选项
+  if (s === 'home') ensureDepts().then(loadHomeDoctors);
   if (s === 'triage') { loadVisitors('triageVisitor'); loadTriageHistory(); }
   if (s === 'reg') { loadRegDepts(); loadVisitors('regVisitor'); loadRegList(); }
   if (s === 'consult') { loadConsultDoctors(); loadVisitors('consultVisitor'); loadConsultList(); }
@@ -378,14 +365,12 @@ async function goReg(deptId, doctorId) {
 // ==================== 就诊人 ====================
 async function loadVisitors(selectId) {
   const sel = document.getElementById(selectId);
-  if (!S.user) { sel.innerHTML = '<option value="">请先登录</option>'; return; }
   const r = await S.api('/api/patient/visitor/list?patientId=' + S.user.id);
   sel.innerHTML = (r.data || []).map(v => `<option value="${v.id}">${v.name}（${v.sex} ${v.age}岁）</option>`).join('');
 }
 
 // ==================== AI预分诊 ====================
 async function submitTriage() {
-  if (needLogin()) return;
   const visitorId = document.getElementById('triageVisitor').value;
   if (!visitorId) { alert('请先添加就诊人'); return; }
   const body = {
@@ -410,14 +395,13 @@ async function submitTriage() {
   loadTriageHistory();
 }
 async function loadTriageHistory() {
-  if (!S.user) return;
   const r = await S.api('/api/triage/history?patientId=' + S.user.id);
   const box = document.getElementById('triageHistory');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无分诊记录'); return; }
-  box.innerHTML = '<table><tr><th>就诊人</th><th>症状</th><th>建议科室</th><th>紧急程度</th><th>时间</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>就诊人</th><th>症状</th><th>建议科室</th><th>紧急程度</th><th>时间</th></tr>' +
     r.data.map(t => `<tr><td>${t.visitorName}</td><td>${t.symptoms}</td><td>${t.suggestedDept}</td>
       <td>${SM.tag(t.urgency, t.urgency === '急诊' ? 'danger' : 'success')}</td>
-      <td>${SM.fmtTime(t.createTime)}</td></tr>`).join('') + '</table>';
+      <td>${SM.fmtTime(t.createTime)}</td></tr>`).join('') + '</table></div>';
 }
 
 // ==================== 预约挂号 ====================
@@ -440,14 +424,13 @@ async function loadRegSchedules() {
   if (!doctorId) { box.innerHTML = ''; return; }
   const r = await S.api('/api/guide/schedules?doctorId=' + doctorId);
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('该医生近期无排班'); return; }
-  box.innerHTML = '<table><tr><th>出诊日期</th><th>时段</th><th>剩余号源</th><th>挂号费</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>出诊日期</th><th>时段</th><th>剩余号源</th><th>挂号费</th><th>操作</th></tr>' +
     r.data.map(s => `<tr><td>${SM.fmtDate(s.workDate)}</td><td>${s.timeSlot}</td>
       <td>${SM.tag(s.remainCount + '/' + s.totalCount, s.remainCount > 0 ? 'success' : 'danger')}</td>
       <td>￥${s.fee}</td>
-      <td>${s.remainCount > 0 ? `<button class="btn sm" onclick="createReg(${s.id})">挂号</button>` : '<span class="muted">约满</span>'}</td></tr>`).join('') + '</table>';
+      <td>${s.remainCount > 0 ? `<button class="btn sm" onclick="createReg(${s.id})">挂号</button>` : '<span class="muted">约满</span>'}</td></tr>`).join('') + '</table></div>';
 }
 async function createReg(scheduleId) {
-  if (needLogin()) return;
   const visitorId = document.getElementById('regVisitor').value;
   if (!visitorId) { alert('请选择就诊人（个人中心可添加）'); return; }
   const r = await S.api(`/api/reg/create?scheduleId=${scheduleId}&visitorId=${visitorId}&patientId=${S.user.id}`, { method: 'POST' });
@@ -456,15 +439,17 @@ async function createReg(scheduleId) {
   loadRegSchedules(); loadRegList();
 }
 async function loadRegList() {
-  if (!S.user) return;
   const r = await S.api('/api/reg/my?patientId=' + S.user.id);
   const box = document.getElementById('regList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无挂号记录'); return; }
-  box.innerHTML = '<table><tr><th>单号</th><th>就诊人</th><th>科室/医生</th><th>就诊时间</th><th>费用</th><th>状态</th><th>操作</th></tr>' +
-    r.data.map(g => `<tr><td>${g.regNo}</td><td>${g.visitorName}</td><td>${g.deptName}/${g.doctorName}</td>
-      <td>${SM.fmtDate(g.workDate)} ${g.timeSlot}</td><td>￥${g.fee}</td>
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>单号</th><th>就诊人</th><th>科室/医生</th><th>费用</th><th>状态</th><th>操作</th></tr>' +
+    r.data.map(g => `<tr>
+      <td><div class="cell-main">${g.regNo}</div><div class="cell-sub">${SM.fmtDate(g.workDate)} ${g.timeSlot}</div></td>
+      <td>${g.visitorName}</td>
+      <td><div class="cell-main">${g.deptName}</div><div class="cell-sub">${g.doctorName}</div></td>
+      <td>￥${g.fee}</td>
       <td>${SM.statusTag('reg', g.status)}</td>
-      <td>${['待支付', '已支付'].includes(g.status) ? `<button class="btn btn--warn sm" onclick="cancelReg(${g.id})">退号</button>` : ''}</td></tr>`).join('') + '</table>';
+      <td>${['待支付', '已支付'].includes(g.status) ? `<button class="btn btn--warn sm" onclick="cancelReg(${g.id})">退号</button>` : ''}</td></tr>`).join('') + '</table></div>';
 }
 async function cancelReg(id) {
   if (!confirm('确认退号？费用将原路退回')) return;
@@ -480,7 +465,6 @@ async function loadConsultDoctors() {
     `<option value="${d.id}">${d.name} ${d.title}（${d.deptName || ''} ${d.onlineStatus}）</option>`).join('');
 }
 async function startConsult() {
-  if (needLogin()) return;
   const visitorId = document.getElementById('consultVisitor').value;
   if (!visitorId) { alert('请先添加就诊人'); return; }
   const body = {
@@ -497,16 +481,15 @@ async function startConsult() {
   openChat(r.data.id);
 }
 async function loadConsultList() {
-  if (!S.user) return;
   const r = await S.api('/api/consult/my?patientId=' + S.user.id);
   const box = document.getElementById('consultList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无问诊记录'); return; }
-  box.innerHTML = '<table><tr><th>编号</th><th>医生</th><th>类型</th><th>病情描述</th><th>状态</th><th>小结</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>编号</th><th>医生</th><th>类型</th><th>病情描述</th><th>状态</th><th>小结</th><th>操作</th></tr>' +
     r.data.map(c => `<tr><td>${c.id}</td><td>${c.doctorName}</td><td>${c.type}</td>
       <td>${(c.description || '').substring(0, 20)}</td>
       <td>${SM.statusTag('consult', c.status)}</td>
       <td>${c.summary ? c.summary.substring(0, 15) : '-'}</td>
-      <td><button class="btn sm" onclick="openChat(${c.id})">进入问诊</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn sm" onclick="openChat(${c.id})">进入问诊</button></td></tr>`).join('') + '</table></div>';
 }
 function openChat(id) {
   currentConsult = id;
@@ -534,15 +517,14 @@ async function sendMsg() {
 
 // ==================== 在线缴费 ====================
 async function loadPayPending() {
-  if (!S.user) return;
   const r = await S.api('/api/pay/pending?patientId=' + S.user.id);
   const box = document.getElementById('payPending');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无待缴费用'); return; }
-  box.innerHTML = '<table><tr><th>订单号</th><th>费用类型</th><th>明细</th><th>金额</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>订单号</th><th>费用类型</th><th>明细</th><th>金额</th><th>操作</th></tr>' +
     r.data.map(p => `<tr><td>${p.orderNo}</td><td>${SM.tag(p.bizType, 'info')}</td><td>${p.title}</td>
       <td><b class="fee">￥${p.amount}</b></td>
       <td><button class="btn btn--success sm" onclick="payOrder(${p.id},'微信')">微信支付</button>
-      <button class="btn sm" onclick="payOrder(${p.id},'支付宝')">支付宝支付</button></td></tr>`).join('') + '</table>';
+      <button class="btn sm" onclick="payOrder(${p.id},'支付宝')">支付宝支付</button></td></tr>`).join('') + '</table></div>';
 }
 async function payOrder(id, payType) {
   const r = await S.api(`/api/pay/pay?paymentId=${id}&payType=${encodeURIComponent(payType)}`, { method: 'POST' });
@@ -551,38 +533,39 @@ async function payOrder(id, payType) {
   loadPayPending(); loadPayRecords();
 }
 async function loadPayRecords() {
-  if (!S.user) return;
   const r = await S.api('/api/pay/records?patientId=' + S.user.id);
   const box = document.getElementById('payRecords');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无缴费记录'); return; }
-  box.innerHTML = '<table><tr><th>订单号</th><th>类型</th><th>明细</th><th>金额</th><th>支付方式</th><th>状态</th><th>电子票据</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>订单号</th><th>类型</th><th>明细</th><th>金额</th><th>支付方式</th><th>状态</th><th>电子票据</th></tr>' +
     r.data.map(p => `<tr><td>${p.orderNo}</td><td>${p.bizType}</td><td>${p.title}</td><td>￥${p.amount}</td>
       <td>${p.payType || '-'}</td><td>${SM.statusTag('pay', p.status)}</td>
-      <td>${p.ticketNo || '-'}</td></tr>`).join('') + '</table>';
+      <td>${p.ticketNo || '-'}</td></tr>`).join('') + '</table></div>';
 }
 
 // ==================== 我的记录 ====================
 async function loadRecords(type) {
-  if (needLogin()) return;
+  //切换器的高亮跟着实际加载的记录类型走（纯展示状态，不涉及接口）
+  document.querySelectorAll('#recTabs button').forEach(b => b.classList.toggle('active', b.dataset.rec === type));
   const box = document.getElementById('recordsList');
   if (type === 'rx') {
     const r = await S.api('/api/records/prescriptions?patientId=' + S.user.id);
     if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无处方'); return; }
     box.innerHTML = r.data.map(rx => `
-      <div class="card" style="margin-bottom:var(--sp-4)">
+      <div class="card" style="margin-bottom:var(--sp-4);box-shadow:none;background:var(--gray-50)">
         <b>处方 ${rx.rxNo}</b> ${SM.statusTag('rx', rx.status)}
         <div class="muted" style="margin:var(--sp-2) 0">诊断：${rx.diagnosis} ｜ 开方医生：${rx.doctorName} ｜ ${SM.fmtTime(rx.createTime)} ｜ 合计 ￥${rx.totalAmount}</div>
-        <table><tr><th>药品</th><th>规格</th><th>数量</th><th>用法用量</th><th>疗程</th><th>小计</th></tr>
+        <div class="table-wrap"><table><tr><th>药品</th><th>规格</th><th>数量</th><th>用法用量</th><th>疗程</th><th>小计</th></tr>
         ${(rx.items || []).map(i => `<tr><td>${i.medicineName}</td><td>${i.spec}</td><td>${i.quantity}</td>
-          <td>${i.dosage || ''} ${i.frequency || ''}</td><td>${i.course || ''}</td><td>￥${i.subtotal}</td></tr>`).join('')}</table>
+          <td>${i.dosage || ''} ${i.frequency || ''}</td><td>${i.course || ''}</td><td>￥${i.subtotal}</td></tr>`).join('')}</table></div>
         ${rx.remark ? `<div class="muted" style="margin-top:var(--sp-2)"><i data-lucide="pin" class="ico"></i> 药房备注：${rx.remark}</div>` : ''}
       </div>`).join('');
   } else if (type === 'medical') {
     const r = await S.api('/api/records/medical?patientId=' + S.user.id);
     if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无病历记录'); return; }
-    box.innerHTML = '<table><tr><th>就诊人</th><th>科室/医生</th><th>诊断</th><th>医嘱建议</th><th>时间</th></tr>' +
-      r.data.map(m => `<tr><td>${m.visitorName}</td><td>${m.deptName || ''}/${m.doctorName}</td>
-        <td>${m.diagnosis}</td><td>${m.advice || ''}</td><td>${SM.fmtTime(m.createTime)}</td></tr>`).join('') + '</table>';
+    box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>就诊人</th><th>科室/医生</th><th>诊断</th><th>医嘱建议</th><th>时间</th></tr>' +
+      r.data.map(m => `<tr><td>${m.visitorName}</td>
+        <td><div class="cell-main">${m.deptName || ''}</div><div class="cell-sub">${m.doctorName}</div></td>
+        <td>${m.diagnosis}</td><td>${m.advice || ''}</td><td>${SM.fmtTime(m.createTime)}</td></tr>`).join('') + '</table></div>';
   } else {
     loadTriageHistoryInto(box);
   }
@@ -590,14 +573,14 @@ async function loadRecords(type) {
 async function loadTriageHistoryInto(box) {
   const r = await S.api('/api/triage/history?patientId=' + S.user.id);
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无预分诊记录'); return; }
-  box.innerHTML = '<table><tr><th>就诊人</th><th>症状</th><th>建议科室</th><th>紧急程度</th><th>建议</th><th>时间</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>就诊人</th><th>症状</th><th>建议科室</th><th>紧急程度</th><th>建议</th><th>时间</th></tr>' +
     r.data.map(t => `<tr><td>${t.visitorName}</td><td>${t.symptoms}</td><td>${t.suggestedDept}</td>
-      <td>${t.urgency}</td><td>${t.advice}</td><td>${SM.fmtTime(t.createTime)}</td></tr>`).join('') + '</table>';
+      <td>${SM.tag(t.urgency, t.urgency === '急诊' ? 'danger' : 'success')}</td><td>${t.advice}</td>
+      <td>${SM.fmtTime(t.createTime)}</td></tr>`).join('') + '</table></div>';
 }
 
 // ==================== 在线问答 ====================
 async function askQuestion() {
-  if (needLogin()) return;
   const content = document.getElementById('qaContent').value.trim();
   if (!content) { alert('请输入问题内容'); return; }
   const r = await S.api('/api/qa/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ patientId: S.user.id, patientName: S.user.name, content }) });
@@ -607,7 +590,6 @@ async function askQuestion() {
   loadQaList();
 }
 async function loadQaList() {
-  if (!S.user) return;
   const r = await S.api('/api/qa/my?patientId=' + S.user.id);
   const box = document.getElementById('qaList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无问答记录'); return; }
@@ -621,7 +603,6 @@ async function loadQaList() {
 
 // ==================== 个人中心 ====================
 async function loadMine() {
-  if (needLogin()) return;
   document.getElementById('mineInfo').innerHTML =
     `<p class="mine-account">账号：${S.user.phone} ｜ 注册时间：${SM.fmtTime(S.user.createTime)}</p>`;
   document.getElementById('mineName').value = S.user.name || '';
@@ -630,10 +611,10 @@ async function loadMine() {
   const r = await S.api('/api/patient/visitor/list?patientId=' + S.user.id);
   const box = document.getElementById('visitorList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无就诊人，请先添加'); return; }
-  box.innerHTML = '<table><tr><th>姓名</th><th>性别</th><th>年龄</th><th>身份证号</th><th>电话</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>姓名</th><th>性别</th><th>年龄</th><th>身份证号</th><th>电话</th><th>操作</th></tr>' +
     r.data.map(v => `<tr><td>${v.name}</td><td>${v.sex || ''}</td><td>${v.age || ''}</td>
       <td>${v.idCard || ''}</td><td>${v.phone || ''}</td>
-      <td><button class="btn btn--warn sm" onclick="delVisitor(${v.id})">删除</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn btn--warn sm" onclick="delVisitor(${v.id})">删除</button></td></tr>`).join('') + '</table></div>';
 }
 async function saveMine() {
   const name = document.getElementById('mineName').value.trim();
@@ -669,17 +650,9 @@ function init() {
   //刷新后停在刷新前的那个标签，而不是无条件回到首页
   activate(location.hash.slice(1) || 'home');
 }
-//令牌可能是隔夜的废票，启动时跟服务端核对一次，别拿 localStorage 的缓存冒充已登录
-async function validateToken() {
-  if (!S.token) return;
-  try {
-    const me = await S.api('/api/auth/me', { silent401: true });
-    if (me.code !== 200) S.clearAuth();
-  } catch (e) {
-    //服务端不可达时不能卡住初始化，先按本地缓存渲染；令牌真失效会在业务请求上暴露出来
-  }
-}
-validateToken().then(init);
+//本地有令牌不等于令牌还有效（2 小时不活动就作废了），启动时先跟服务端核对一次；
+//核对不过 verify() 自己会清身份并跳登录页，这里什么都不用做
+S.verify().then(ok => { if (ok) init(); });
 
 SM.initIcons();
 </script>

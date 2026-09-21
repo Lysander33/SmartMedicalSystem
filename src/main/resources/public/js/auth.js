@@ -17,6 +17,18 @@ window.SM = window.SM || {};
   SM.LEGACY_KEYS = LEGACY_KEYS;
 
   /**
+   * 页面门禁：没有这个角色的令牌就直接跳登录页。
+   * 必须在 <head> 里同步执行 —— 放到页面底部会先闪出内容再跳，
+   * 而且页面启动脚本会拿 null 身份去取属性，白屏或报错。
+   * 这里只查令牌在不在，令牌真伪由会话对象的 verify() 在启动时核对。
+   */
+  SM.requireLogin = function (role) {
+    if (localStorage.getItem('token_' + role)) return true;
+    location.replace('/login.html?role=' + role);
+    return false;
+  };
+
+  /**
    * 创建一个端的会话对象。
    *
    * cfg.role          localStorage key 后缀，必填（'patient'|'doctor'|'pharmacy'|'admin'）
@@ -47,7 +59,27 @@ window.SM = window.SM || {};
       token: localStorage.getItem(keyToken) || '',
       user: null,
 
-      hasAuth: function () { return !!(S.token && S.user); },
+      //启动时跟服务端核对一次令牌：localStorage 里可能躺着隔夜的废票，
+      //光看它在不在会渲染出一个「看着像已登录」的假界面
+      verify: function () {
+        if (!S.token || !S.user) {
+          S.clearAuth();
+          location.replace(redirect);
+          return Promise.resolve(false);
+        }
+        return fetch('/api/auth/me', { headers: { 'X-Token': S.token } })
+          .then(function (res) { return res.json(); })
+          .then(function (r) {
+            if (r && r.code === 200) return true;
+            S.clearAuth();
+            location.replace(redirect);
+            return false;
+          })
+          .catch(function () {
+            //服务端不可达不能把人卡在门外，先按本地缓存渲染；令牌真失效会在业务请求上暴露出来
+            return true;
+          });
+      },
 
       clearAuth: function () {
         localStorage.removeItem(keyToken);

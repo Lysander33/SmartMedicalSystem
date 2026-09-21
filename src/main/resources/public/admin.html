@@ -4,38 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智慧医疗就诊系统 - 管理平台</title>
+<!-- 门禁放在样式表之前：未登录直接跳登录页，连样式都不必下载，也不会闪出半个页面 -->
+<script src="/js/auth.js"></script>
+<script>SM.requireLogin('admin');</script>
 <link rel="stylesheet" href="/css/app.css">
 <style>
-/* 本页独占：左侧竖向导航 + 统计卡片 + 问答条目（其他端没有这套布局） */
-.layout{display:flex;max-width:1250px;margin:var(--sp-6) auto;padding:0 var(--sp-4);gap:var(--sp-5);align-items:flex-start}
+/* 本页独占：左侧竖向导航 + 问答条目（其他端没有这套布局）。
+   统计卡的样式已经挪到 app.css 的共享 .stat，这里不再重复定义 ——
+   页面内 <style> 排在共享表之后，留着旧的会把共享版盖掉 */
+.layout{display:flex;max-width:1250px;margin:var(--sp-5) auto;padding:0 var(--sp-4);gap:var(--sp-5);align-items:flex-start}
 .side{width:196px;flex:0 0 196px;background:var(--surface);border-radius:var(--r-2xl);padding:var(--sp-4) var(--sp-3);
   box-shadow:var(--sh-md);border:1px solid var(--line);height:fit-content;position:sticky;top:82px}
 .side button{display:flex;align-items:center;gap:var(--sp-2);width:100%;text-align:left;border:none;background:none;
-  padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);font-size:var(--fs-md);color:var(--gray-600);
+  padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);font-size:var(--fs-base);color:var(--gray-600);
   cursor:pointer;margin-bottom:var(--sp-1);font-weight:500;
   transition:background var(--dur),color var(--dur),box-shadow var(--dur)}
 .side button:hover:not(.active){background:var(--gray-100);color:var(--ink)}
-.side button.active{background:linear-gradient(90deg,var(--primary-dark),var(--primary));color:#fff;
-  box-shadow:0 4px 12px var(--primary-ring)}
+.side button.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--primary)}
 .content{flex:1;min-width:0}
-
-/* 统计卡片 */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--sp-4)}
-.stat{background:linear-gradient(135deg,var(--primary-dark),var(--blue-500));color:#fff;border-radius:var(--r-xl);
-  padding:var(--sp-5) var(--sp-4);text-align:center;box-shadow:0 8px 18px var(--primary-ring);
-  transition:transform var(--dur),box-shadow var(--dur);position:relative;overflow:hidden}
-.stat::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.14);top:-30px;right:-30px}
-.stat:hover{transform:translateY(-3px);box-shadow:0 12px 26px var(--primary-ring)}
-.stat .num{font-size:var(--fs-2xl);font-weight:700;position:relative}
-.stat .lbl{font-size:var(--fs-sm);opacity:.88;margin-top:5px;position:relative}
+@media (max-width:860px){
+  .layout{flex-direction:column}
+  .side{width:100%;flex:1 1 auto;position:static;display:flex;flex-wrap:wrap;gap:var(--sp-1)}
+  .side button{width:auto;margin-bottom:0}
+}
 
 /* 行内控件收窄（表单行里需要窄输入框） */
 .ctrl{max-width:180px;min-width:0}
 .ctrl-sm{max-width:140px;min-width:0}
 
-/* 在线问答条目 */
-.qa-item{border-bottom:1px dashed var(--line);padding:var(--sp-3) 0}
-.qa-item:last-child{border-bottom:none}
+/* 在线问答条目（骨架 .qa-item 在 app.css） */
 .qa-ans{color:var(--info-fg);font-size:var(--fs-base);margin-top:var(--sp-2)}
 .qa-reply{margin-top:var(--sp-2);display:flex;gap:var(--sp-2)}
 .qa-reply input{margin-bottom:0}
@@ -61,18 +59,28 @@
   <div class="content">
     <!-- 统计报表 -->
     <div class="section active" id="s-stats">
+      <div class="page-head">
+        <span class="eyebrow"><i data-lucide="monitor" class="ico"></i>管理平台</span>
+        <h1>运营总览</h1>
+        <p>挂号量、处方量、缴费金额与发药完成情况的实时统计。左侧可切换到医生、排班、患者、药品、订单与问答管理。</p>
+      </div>
       <div class="card">
-        <h3><i data-lucide="chart-column" class="ico"></i>运营统计报表</h3>
+        <div class="card-head">
+          <h3><i data-lucide="chart-column" class="ico"></i>运营统计报表</h3>
+          <div class="card-actions"><button class="btn btn--neutral sm" onclick="loadStats()">刷新</button></div>
+        </div>
         <div class="stat-grid" id="statsGrid"></div>
-        <p class="muted" style="margin-top:var(--sp-3)">统计口径：挂号量、处方量、缴费金额、发药完成情况等（实时数据）</p>
+        <p class="muted" style="margin-top:var(--sp-4)">统计口径：挂号量、处方量、缴费金额、发药完成情况等（实时数据）</p>
       </div>
     </div>
 
     <!-- 医生管理 -->
     <div class="section" id="s-doctor">
       <div class="card">
-        <h3><i data-lucide="stethoscope" class="ico"></i>医生管理（信息维护 / 账号管理 / 在线状态）</h3>
-        <div class="row" style="align-items:flex-end;margin-bottom:var(--sp-2);background:var(--gray-50);border-radius:var(--r-md);padding:var(--sp-3)">
+        <div class="card-head">
+          <h3><i data-lucide="stethoscope" class="ico"></i>医生管理（信息维护 / 账号管理 / 在线状态）</h3>
+        </div>
+        <div class="toolbar">
           <div><label>重置密码：选择医生</label><select id="pwdDoctor"></select></div>
           <div class="ctrl"><label>新密码</label><input id="pwdNew" placeholder="输入新密码"></div>
           <div class="shrink"><button class="btn btn--warn" onclick="doResetPwd()">确认重置</button></div>
@@ -80,7 +88,9 @@
         <div id="doctorList"></div>
       </div>
       <div class="card">
-        <h3><i data-lucide="plus" class="ico"></i>新增医生（为新转来的医生开通账号）</h3>
+        <div class="card-head">
+          <h3><i data-lucide="plus" class="ico"></i>新增医生（为新转来的医生开通账号）</h3>
+        </div>
         <div class="row">
           <div><label>姓名</label><input id="dName"></div>
           <div><label>职称</label><select id="dTitle"><option>主任医师</option><option>副主任医师</option><option>主治医师</option><option>住院医师</option></select></div>
@@ -102,14 +112,17 @@
     <!-- 排班管理 -->
     <div class="section" id="s-schedule">
       <div class="card">
-        <h3><i data-lucide="calendar-days" class="ico"></i>排班管理（维护出诊日期、时段与号源数量）</h3>
-        <div class="row">
+        <div class="card-head">
+          <h3><i data-lucide="calendar-days" class="ico"></i>排班管理（维护出诊日期、时段与号源数量）</h3>
+          <div class="card-actions"><button class="btn btn--neutral sm" onclick="loadSchedules()">刷新</button></div>
+        </div>
+        <div class="toolbar">
           <div><label>医生</label><select id="sDoctor" onchange="loadSchedules()"></select></div>
           <div><label>出诊日期</label><input id="sDate" type="date"></div>
           <div><label>时段</label><select id="sSlot"><option>上午</option><option>下午</option><option>晚间</option></select></div>
           <div><label>号源数量</label><input id="sCount" type="number" value="20"></div>
+          <div class="shrink"><button class="btn" onclick="addSchedule()">新增排班</button></div>
         </div>
-        <button class="btn" onclick="addSchedule()">新增排班</button>
         <div id="scheduleList"></div>
       </div>
     </div>
@@ -117,7 +130,10 @@
     <!-- 患者管理 -->
     <div class="section" id="s-patient">
       <div class="card">
-        <h3><i data-lucide="users" class="ico"></i>患者管理（档案查看 / 账号状态管理）</h3>
+        <div class="card-head">
+          <h3><i data-lucide="users" class="ico"></i>患者管理（档案查看 / 账号状态管理）</h3>
+          <div class="card-actions"><button class="btn btn--neutral sm" onclick="loadPatients()">刷新</button></div>
+        </div>
         <div id="patientList"></div>
       </div>
     </div>
@@ -125,8 +141,10 @@
     <!-- 药品管理 -->
     <div class="section" id="s-medicine">
       <div class="card">
-        <h3><i data-lucide="pill" class="ico"></i>药品信息管理（字典 / 库存 / 上下架 / 低库存预警）</h3>
-        <div class="row" style="align-items:flex-end;margin-bottom:var(--sp-2);background:var(--gray-50);border-radius:var(--r-md);padding:var(--sp-3)">
+        <div class="card-head">
+          <h3><i data-lucide="pill" class="ico"></i>药品信息管理（字典 / 库存 / 上下架 / 低库存预警）</h3>
+        </div>
+        <div class="toolbar">
           <div><label>药品入库：选择药品</label><select id="stockMed"></select></div>
           <div class="ctrl-sm"><label>入库数量</label><input id="stockQty" type="number" value="100"></div>
           <div class="shrink"><button class="btn btn--success" onclick="doAddStock()">确认入库</button></div>
@@ -134,7 +152,9 @@
         <div id="medicineList"></div>
       </div>
       <div class="card">
-        <h3><i data-lucide="package-plus" class="ico"></i>新增药品</h3>
+        <div class="card-head">
+          <h3><i data-lucide="package-plus" class="ico"></i>新增药品</h3>
+        </div>
         <div class="row">
           <div><label>药品名称</label><input id="mName"></div>
           <div><label>通用名</label><input id="mGeneric"></div>
@@ -157,8 +177,10 @@
     <!-- 订单管理 -->
     <div class="section" id="s-order">
       <div class="card">
-        <h3><i data-lucide="receipt" class="ico"></i>订单信息管理（挂号 / 缴费 / 处方订单统一查询与状态跟踪）</h3>
-        <button class="btn btn--neutral sm" onclick="loadOrders()">刷新</button>
+        <div class="card-head">
+          <h3><i data-lucide="receipt" class="ico"></i>订单信息管理（挂号 / 缴费 / 处方订单统一查询与状态跟踪）</h3>
+          <div class="card-actions"><button class="btn btn--neutral sm" onclick="loadOrders()">刷新</button></div>
+        </div>
         <div id="orderList"></div>
       </div>
     </div>
@@ -166,7 +188,10 @@
     <!-- 问答管理 -->
     <div class="section" id="s-qa">
       <div class="card">
-        <h3><i data-lucide="circle-help" class="ico"></i>在线问答管理（问题接收与在线解答）</h3>
+        <div class="card-head">
+          <h3><i data-lucide="circle-help" class="ico"></i>在线问答管理（问题接收与在线解答）</h3>
+          <div class="card-actions"><button class="btn btn--neutral sm" onclick="loadQa()">刷新</button></div>
+        </div>
         <div id="qaList"></div>
       </div>
     </div>
@@ -194,7 +219,6 @@
 </div>
 
 <script src="/js/lucide.min.js"></script>
-<script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
 <script>
 //统一登录：令牌与身份按角色分槽存（token_患者 / token_管理员 ...），四个端互不覆盖
@@ -230,30 +254,60 @@ const activate = SM.router({
 });
 
 // ==================== 统计报表 ====================
+//接口返回的是「指标名 → 数值」的映射，顺序不保证（后端用 HashMap 拼的），
+//所以图标与色调按指标名查表，别依赖返回顺序
+const STAT_STYLE = {
+  '挂号订单量':   ['calendar-check', 'primary'],
+  '处方订单量':   ['file-text',      'info'],
+  '已缴费总金额': ['wallet',         'success'],
+  '待支付订单量': ['clock',          'warn'],
+  '退款订单量':   ['undo-2',         'danger'],
+  '订单总量':     ['receipt',        'neutral']
+};
 async function loadStats() {
   const r = await S.api('/api/admin/order/stats');
   const d = r.data || {};
-  document.getElementById('statsGrid').innerHTML = Object.entries(d).map(([k, v]) =>
-    `<div class="stat"><div class="num">${v}</div><div class="lbl">${k}</div></div>`).join('');
+  document.getElementById('statsGrid').innerHTML = Object.entries(d).map(([k, v]) => {
+    const [ico, tone] = STAT_STYLE[k] || ['activity', 'primary'];
+    return `<div class="stat" style="--c:var(--${tone});--cbg:var(--${tone}-bg)">
+      <div class="stat-ico">${SM.icon(ico)}</div>
+      <div><div class="num">${v}</div><div class="lbl">${k}</div></div>
+    </div>`;
+  }).join('');
 }
 
 // ==================== 医生管理 ====================
+//字段有十来个、每行还有四个操作，塞进表格必然折行成好几层，所以一条医生一行卡：
+//左头像、中间两行（标题行放姓名与徽章，meta 行放科室/工号/费用/评分）、右侧操作
 async function loadDoctors() {
   const r = await S.api('/api/admin/doctor/list');
   const box = document.getElementById('doctorList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无医生'); return; }
-  box.innerHTML = '<table><tr><th>ID</th><th>姓名</th><th>职称</th><th>科室</th><th>登录工号</th><th>挂号费</th><th>评分</th><th>在线状态</th><th>账号</th><th>操作</th></tr>' +
-    r.data.map(d => `<tr><td>${d.id}</td><td>${d.name}</td><td>${d.title}</td><td>${d.deptName || d.deptId}</td>
-      <td><b>${d.account || '-'}</b></td><td>￥${d.fee}</td><td>${d.score}</td>
-      <td>${SM.tag(d.onlineStatus, d.onlineStatus === '在线' ? 'success' : d.onlineStatus === '忙碌' ? 'warn' : 'neutral')}</td>
-      <td>${statusTag(d.status)}</td>
-      <td>
+  box.innerHTML = '<div class="row-list">' + r.data.map(d => `
+    <div class="row-card${d.status === 2 ? ' is-left' : ''}">
+      <div class="avatar avatar--sm">${d.name[0]}</div>
+      <div class="row-main">
+        <div class="row-title">
+          ${d.name}
+          ${SM.tag(d.title, 'info')}
+          ${SM.tag(d.onlineStatus, d.onlineStatus === '在线' ? 'success' : d.onlineStatus === '忙碌' ? 'warn' : 'neutral')}
+          ${statusTag(d.status)}
+        </div>
+        <div class="row-meta">
+          <span>${d.deptName || d.deptId}</span><span class="dot">·</span>
+          <span>工号 ${d.account || '-'}</span><span class="dot">·</span>
+          <span>挂号费 ￥${d.fee}</span><span class="dot">·</span>
+          <span>评分 ${d.score}</span>
+        </div>
+      </div>
+      <div class="row-actions">
         <button class="btn btn--info sm" onclick="toggleOnline(${d.id},'${d.onlineStatus}')">切换在线</button>
         ${d.status === 2 ? '' : `<button class="btn sm ${d.status === 1 ? 'btn--warn' : 'btn--success'}" onclick="toggleDoctor(${d.id},${d.status})">${d.status === 1 ? '停用' : '开通'}</button>`}
         <button class="btn btn--neutral sm" onclick="resetPwdFor(${d.id})">重置密码</button>
         ${d.status === 2 ? '<span class="muted">已离职</span>'
           : `<button class="btn btn--danger sm" onclick="askDeleteDoctor(${d.id},'${d.name}','${d.account || ''}')">办理离职</button>`}
-      </td></tr>`).join('') + '</table>';
+      </div>
+    </div>`).join('') + '</div>';
   const dr = await S.api('/api/guide/depts');
   document.getElementById('dDept').innerHTML = (dr.data || []).map(x => `<option value="${x.id}">${x.name}</option>`).join('');
   //同步刷新重置密码的医生下拉框
@@ -337,8 +391,8 @@ async function loadSchedules() {
   const r = await S.api('/api/admin/schedule/list?doctorId=' + doctorId);
   const box = document.getElementById('scheduleList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('该医生暂无排班'); return; }
-  box.innerHTML = '<table><tr><th>出诊日期</th><th>时段</th><th>剩余/总号源</th></tr>' +
-    r.data.map(s => `<tr><td>${SM.fmtDate(s.workDate)}</td><td>${s.timeSlot}</td><td>${s.remainCount}/${s.totalCount}</td></tr>`).join('') + '</table>';
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>出诊日期</th><th>时段</th><th>剩余/总号源</th></tr>' +
+    r.data.map(s => `<tr><td>${SM.fmtDate(s.workDate)}</td><td>${s.timeSlot}</td><td>${s.remainCount}/${s.totalCount}</td></tr>`).join('') + '</table></div>';
 }
 async function addSchedule() {
   const body = {
@@ -358,11 +412,13 @@ async function loadPatients() {
   const r = await S.api('/api/admin/patient/list');
   const box = document.getElementById('patientList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无患者'); return; }
-  box.innerHTML = '<table><tr><th>ID</th><th>手机号</th><th>姓名</th><th>身份证号</th><th>性别</th><th>注册时间</th><th>账号状态</th><th>操作</th></tr>' +
-    r.data.map(p => `<tr><td>${p.id}</td><td>${p.phone}</td><td>${p.name || ''}</td><td>${p.idCard || ''}</td>
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>ID</th><th>就诊人</th><th>身份证号</th><th>性别</th><th>注册时间</th><th>账号状态</th><th>操作</th></tr>' +
+    r.data.map(p => `<tr><td>${p.id}</td>
+      <td><div class="cell-main">${p.name || '未实名'}</div><div class="cell-sub">${p.phone}</div></td>
+      <td>${p.idCard || ''}</td>
       <td>${p.sex || ''}</td><td>${SM.fmtTime(p.createTime)}</td>
       <td>${SM.tag(p.status === 1 ? '正常' : '已停用', p.status === 1 ? 'success' : 'danger')}</td>
-      <td><button class="btn sm ${p.status === 1 ? 'btn--warn' : 'btn--success'}" onclick="togglePatient(${p.id},${p.status})">${p.status === 1 ? '停用' : '恢复'}</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn sm ${p.status === 1 ? 'btn--warn' : 'btn--success'}" onclick="togglePatient(${p.id},${p.status})">${p.status === 1 ? '停用' : '恢复'}</button></td></tr>`).join('') + '</table></div>';
 }
 async function togglePatient(id, status) {
   const r = await S.api(`/api/admin/patient/status?id=${id}&status=${status === 1 ? 0 : 1}`, { method: 'POST' });
@@ -379,16 +435,17 @@ async function loadMedicines() {
   stockSel.innerHTML = (r.data || []).map(m => `<option value="${m.id}">${m.name}（当前库存${m.stock}）</option>`).join('');
   if (oldVal) stockSel.value = oldVal;
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无药品'); return; }
-  box.innerHTML = '<table><tr><th>ID</th><th>名称</th><th>规格</th><th>分类</th><th>价格</th><th>库存</th><th>医保</th><th>状态</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>药品</th><th>分类</th><th>价格</th><th>库存</th><th>医保</th><th>状态</th><th>操作</th></tr>' +
     r.data.map(m => `<tr>
-      <td>${m.id}</td><td>${m.name}</td><td>${m.spec}</td><td>${m.category}</td><td>￥${m.price}</td>
+      <td><div class="cell-main">${m.name}</div><div class="cell-sub">#${m.id} · ${m.spec}</div></td>
+      <td>${m.category}</td><td>￥${m.price}</td>
       <td>${m.stock <= m.warnStock ? SM.tag(m.stock + ' 低库存', 'danger') : m.stock}</td>
       <td>${m.insuranceType}</td>
       <td>${SM.tag(m.status, m.status === '上架' ? 'success' : 'neutral')}</td>
       <td>
         <button class="btn btn--success sm" onclick="addStock(${m.id})">入库</button>
         <button class="btn sm ${m.status === '上架' ? 'btn--warn' : 'btn--info'}" onclick="toggleMedicine(${m.id},'${m.status}')">${m.status === '上架' ? '下架' : '上架'}</button>
-      </td></tr>`).join('') + '</table>';
+      </td></tr>`).join('') + '</table></div>';
 }
 function addStock(id) {
   // 行内“入库”按钮：选中对应药品并聚焦数量输入框
@@ -430,11 +487,13 @@ async function loadOrders() {
   const r = await S.api('/api/admin/order/list');
   const box = document.getElementById('orderList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无订单'); return; }
-  box.innerHTML = '<table><tr><th>订单号</th><th>患者ID</th><th>类型</th><th>明细</th><th>金额</th><th>状态</th><th>支付方式</th><th>下单时间</th></tr>' +
-    r.data.map(o => `<tr><td>${o.orderNo}</td><td>${o.patientId}</td><td>${SM.tag(o.bizType, 'info')}</td>
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>订单</th><th>类型</th><th>明细</th><th>金额</th><th>状态</th><th>支付方式</th><th>下单时间</th></tr>' +
+    r.data.map(o => `<tr>
+      <td><div class="cell-main">${o.orderNo}</div><div class="cell-sub">患者 #${o.patientId}</div></td>
+      <td>${SM.tag(o.bizType, 'info')}</td>
       <td>${o.title}</td><td>￥${o.amount}</td>
       <td>${SM.statusTag('pay', o.status)}</td><td>${o.payType || '-'}</td>
-      <td>${SM.fmtTime(o.createTime)}</td></tr>`).join('') + '</table>';
+      <td>${SM.fmtTime(o.createTime)}</td></tr>`).join('') + '</table></div>';
 }
 
 // ==================== 问答管理 ====================
@@ -461,8 +520,9 @@ async function answerQa(id) {
   alert(r.msg); loadQa();
 }
 
-//未登录（无身份或无令牌）直接跳登录页；已登录才初始化，避免拿 null 取属性报错
-if (S.hasAuth()) {
+//令牌可能已经作废（2 小时不活动就过期），核对通过才初始化，避免拿 null 身份取属性报错
+S.verify().then(ok => {
+  if (!ok) return;
   SM.renderTopbar({
     elId: 'staffArea', user: S.user, icon: 'monitor',
     label: u => `${u.name}（${u.account}）`,
@@ -470,9 +530,7 @@ if (S.hasAuth()) {
   });
   //刷新后停在刷新前的那个栏目，而不是无条件回到统计报表
   activate(location.hash.slice(1) || 'stats');
-} else {
-  location.href = '/login.html?role=admin';
-}
+});
 
 SM.initIcons();
 </script>

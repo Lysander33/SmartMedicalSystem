@@ -71,23 +71,22 @@ window.SM = window.SM || {};
   /* ---------- 顶栏身份区 ---------- */
 
   /**
+   * 顶栏右侧唯一的身份入口：身份 + 切换身份 + 退出。
+   * 全站都要登录才进得来，所以这里不再有「未登录」分支，
+   * 也不会再出现两个登录按钮（原来患者端是弹窗入口 + 医护登录链接各一个）。
+   *
    * cfg.elId       容器 id（患者端 'userArea'，员工端 'staffArea'）
-   * cfg.user       身份对象；为空表示未登录
+   * cfg.user       身份对象
    * cfg.icon       身份图标名
    * cfg.label      u => 显示文案
-   * cfg.loginFn    未登录时 javascript: 调用的全局函数名（仅患者端用）
-   * cfg.logoutFn   已登录时 javascript: 调用的全局函数名
+   * cfg.logoutFn   退出时 javascript: 调用的全局函数名
    * cfg.logoutText 退出按钮文案（患者端是「退出」，员工端是「退出登录」）
    */
   SM.renderTopbar = function (cfg) {
     var el = SM.$(cfg.elId);
     if (!el) return;
-    if (!cfg.user) {
-      el.innerHTML = '<a href="javascript:' + cfg.loginFn + '()">' +
-        (cfg.loginText || '登录/注册') + '</a>';
-      return;
-    }
     el.innerHTML = '<span class="who">' + SM.icon(cfg.icon) + ' ' + cfg.label(cfg.user) +
+      ' <a href="/login.html" title="登录其他身份的工作端">切换身份</a>' +
       ' <a href="javascript:' + cfg.logoutFn + '()">' + (cfg.logoutText || '退出') + '</a></span>';
   };
 

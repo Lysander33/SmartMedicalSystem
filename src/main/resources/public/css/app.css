@@ -17,6 +17,8 @@
   --blue-50:#eff6ff; --blue-100:#dbeafe; --blue-500:#3b82f6;
   --blue-600:#2563eb; --blue-700:#1d4ed8;
   --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#eff6ff;
+  /* 别名：让语义色补齐成 --X / --X-bg 的统一样式，统计卡按色调查表时才能一视同仁 */
+  --primary-bg:#eff6ff;
   --primary-ring:rgba(37,99,235,.15);
 
   /* 语义色 */
@@ -78,13 +80,14 @@ img,svg{max-width:100%}
 .topbar .ico,.topbar svg.lucide{width:1.15em;height:1.15em}
 
 /* ---------- 顶栏 ---------- */
-.topbar{background:var(--gray-900);backdrop-filter:blur(8px);color:#fff;padding:0 var(--sp-6);height:62px;
+.topbar{background:linear-gradient(180deg,var(--gray-800),var(--gray-900));backdrop-filter:blur(8px);color:#fff;
+  padding:0 var(--sp-6);height:64px;
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:var(--z-topbar);
-  box-shadow:var(--sh-md);border-top:3px solid var(--role)}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),var(--sh-md);border-top:3px solid var(--role)}
 .topbar b{font-size:1.1rem;letter-spacing:1px;font-weight:700}
 .topbar .logo{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:var(--sp-2)}
 .topbar .logo .badge{background:var(--role);color:#fff;font-size:var(--fs-xs);padding:3px var(--sp-3);
-  border-radius:var(--r-full);font-weight:600;letter-spacing:0}
+  border-radius:var(--r-full);font-weight:600;letter-spacing:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
 .topbar a{color:rgba(255,255,255,.82);text-decoration:none;font-size:var(--fs-sm);transition:color var(--dur)}
 .topbar a:hover{color:#fff}
 .topbar .who{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-sm);color:rgba(255,255,255,.9)}
@@ -100,14 +103,34 @@ img,svg{max-width:100%}
 .card h3{font-size:var(--fs-lg);color:var(--ink);margin-bottom:var(--sp-4);
   display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 .card h3::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,var(--role),var(--primary))}
+/* 标题里的图标做成浅色方块，比裸图标更容易形成视觉锚点 */
+.card h3>svg.lucide,.card h3>.ico{width:1.05em;height:1.05em;padding:5px;border-radius:var(--r-sm);
+  background:var(--primary-light);color:var(--primary-dark);box-sizing:content-box}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- 页头 ---------- */
+/* 每个端正文顶部一块：小标题用角色色（--role），大标题，一行说明。
+   用 --role 而不是写死主色，四个端就自动带上各自的色，又不至于各写一套 */
+.page-head{margin-bottom:var(--sp-5)}
+.page-head .eyebrow{display:inline-flex;align-items:center;gap:var(--sp-1);font-size:var(--fs-xs);
+  font-weight:700;letter-spacing:1.5px;color:var(--role)}
+.page-head h1{font-size:var(--fs-2xl);letter-spacing:.5px;color:var(--ink);margin:var(--sp-1) 0}
+.page-head p{color:var(--muted);font-size:var(--fs-base)}
+
+/* ---------- 卡片头部 ---------- */
+/* 标题在左、操作在右。原来「刷新」这类按钮被塞在 h3 里跟标题挤一行，现在挪到右侧 */
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  flex-wrap:wrap;margin-bottom:var(--sp-4)}
+.card-head>h3{margin-bottom:0}
+.card-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 
 /* ---------- 按钮 ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
   padding:9px var(--sp-5);border:none;border-radius:var(--r-md);background:var(--primary);color:#fff;
   font-size:var(--fs-base);font-family:inherit;font-weight:500;line-height:1.4;cursor:pointer;
-  text-decoration:none;transition:background var(--dur),transform var(--dur),box-shadow var(--dur)}
+  text-decoration:none;box-shadow:0 1px 2px rgba(15,23,42,.08);
+  transition:background var(--dur),transform var(--dur),box-shadow var(--dur)}
 .btn:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 14px var(--primary-ring)}
 .btn:active{transform:none}
 .btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
@@ -123,25 +146,47 @@ img,svg{max-width:100%}
 input,select,textarea{width:100%;padding:10px var(--sp-3);border:1.5px solid var(--line);border-radius:var(--r-md);
   font-size:var(--fs-base);font-family:inherit;color:var(--ink);outline:none;margin-bottom:var(--sp-2);
   background:var(--gray-50);transition:border-color var(--dur),box-shadow var(--dur),background var(--dur)}
+input:hover:not(:focus),select:hover:not(:focus),textarea:hover:not(:focus){border-color:var(--line-strong)}
 input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-ring);background:var(--surface)}
 input::placeholder,textarea::placeholder{color:var(--gray-400)}
 textarea{resize:vertical;line-height:1.6}
 select{cursor:pointer}
 label{font-size:var(--fs-sm);color:var(--gray-600);display:block;margin-bottom:5px;font-weight:500}
 
+/* 行内表单条：「选一个 + 填一个 + 按一下」这类小工具组（药品入库、重置密码）。
+   按钮是 .shrink，会跟 .toolbar>div 的 flex 抢，所以要单独钉住它 */
+.toolbar{display:flex;gap:var(--sp-3);flex-wrap:wrap;align-items:flex-end;
+  background:var(--gray-50);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:var(--sp-4);margin-bottom:var(--sp-4)}
+.toolbar>div{flex:1 1 170px;min-width:0}
+.toolbar>.shrink{flex:0 0 auto}
+.toolbar input,.toolbar select{margin-bottom:0}
+
 /* ---------- 栅格 ---------- */
 .row{display:flex;gap:var(--sp-3);flex-wrap:wrap}
 .row>*{flex:1;min-width:150px}
 
 /* ---------- 表格 ---------- */
-table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-base);
-  margin-top:var(--sp-2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
-th,td{padding:10px var(--sp-3);text-align:left;border-bottom:1px solid var(--line)}
+/* 边框、圆角、滚动都交给 .table-wrap：table 自己带 overflow:hidden 会把吸顶表头一起裁掉 */
+.table-wrap{border:1px solid var(--line);border-radius:var(--r-md);overflow:auto;margin-top:var(--sp-2)}
+/* 长列表用这个：给容器限高，表头吸顶才有意义 */
+.table-wrap--limit{max-height:520px}
+.table-wrap table{margin-top:0;min-width:var(--table-min,660px)}
+.table-wrap th{position:sticky;top:0;z-index:1}
+/* 「字段名 / 值」这种两列详情表：没有真正的表头，吸顶和最小宽度都不适用 */
+.table-wrap--plain table{min-width:0}
+.table-wrap--plain th{position:static}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-base);margin-top:var(--sp-2)}
+th,td{padding:10px var(--sp-3);text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
 th{background:var(--gray-100);color:var(--gray-700);font-weight:600;font-size:var(--fs-sm);white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tbody tr{transition:background var(--dur-fast)}
-tbody tr:hover{background:var(--gray-50)}
+tbody tr:hover td{background:var(--gray-50)}
+tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
 td .btn{margin:1px 0}
+/* 单元格两行惯用法：主文案 + 灰色小字。字段多时用它合并列，比横着塞七八列好读 */
+.cell-main{font-weight:600;color:var(--ink)}
+.cell-sub{color:var(--muted);font-size:var(--fs-xs);margin-top:1px}
 
 /* ---------- 状态徽章 ---------- */
 .tag{display:inline-block;padding:3px var(--sp-3);border-radius:var(--r-full);font-size:var(--fs-xs);font-weight:500;white-space:nowrap}
@@ -158,6 +203,10 @@ td .btn{margin:1px 0}
 /* ---------- 问诊对话 ---------- */
 .chat-box{border:1.5px solid var(--line);border-radius:var(--r-xl);height:340px;overflow:auto;padding:var(--sp-4);
   background:var(--gray-50);display:flex;flex-direction:column}
+.chat-box::-webkit-scrollbar{width:8px}
+.chat-box::-webkit-scrollbar-track{background:transparent}
+.chat-box::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:var(--r-full)}
+.chat-box::-webkit-scrollbar-thumb:hover{background:var(--gray-400)}
 .msg{max-width:74%;padding:10px var(--sp-3);border-radius:var(--r-xl);margin-bottom:var(--sp-3);
   font-size:var(--fs-base);line-height:1.6;box-shadow:var(--sh-sm);
   background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:var(--r-xs);align-self:flex-start}
@@ -171,6 +220,8 @@ td .btn{margin:1px 0}
 .avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--blue-500));
   color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xl);font-weight:600;
   box-shadow:0 4px 10px var(--primary-ring);flex:0 0 auto}
+/* 行卡列表里的小头像 */
+.avatar--sm{width:36px;height:36px;font-size:var(--fs-md);box-shadow:none}
 
 /* ---------- 弹窗 ---------- */
 .modal-mask{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);
@@ -193,15 +244,69 @@ td .btn{margin:1px 0}
 @keyframes modalUp{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
 
 /* ---------- 空态 ---------- */
-.empty{text-align:center;color:var(--gray-400);padding:var(--sp-8) 0;font-size:var(--fs-base)}
-.empty::before{content:"";display:block;width:40px;height:40px;margin:0 auto var(--sp-2);opacity:.5;
+.empty{text-align:center;color:var(--gray-400);padding:var(--sp-10) 0;font-size:var(--fs-base)}
+.empty::before{content:"";display:block;width:40px;height:40px;margin:0 auto var(--sp-3);opacity:.5;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-6l-2 3h-4l-2-3H2'/%3E%3Cpath d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/%3E%3C/svg%3E") center/contain no-repeat}
+
+/* ---------- 行卡列表 ---------- */
+/* 字段多到塞进表格必然折行的场景（管理端医生管理：10 个字段 + 4 个操作）。
+   一条一行卡：左头像、中间两行（标题行放徽章，meta 行放其余字段）、右侧操作。 */
+.row-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+.row-card{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);
+  transition:border-color var(--dur),box-shadow var(--dur)}
+.row-card:hover{border-color:var(--line-strong);box-shadow:var(--sh-sm)}
+/* 已离职：整行压灰，扫一眼就能跳过 */
+.row-card.is-left{background:var(--gray-50)}
+.row-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row-title{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;
+  font-size:var(--fs-md);font-weight:600;color:var(--ink)}
+.row-meta{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;
+  color:var(--muted);font-size:var(--fs-sm)}
+.row-meta .dot{color:var(--gray-300)}
+.row-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;
+  justify-content:flex-end;flex:0 0 auto}
+/* 窄屏：操作组掉到第二行，别跟姓名抢宽度 */
+@media (max-width:640px){
+  .row-card{flex-wrap:wrap}
+  .row-actions{width:100%;justify-content:flex-start}
+}
+
+/* ---------- 统计卡 ---------- */
+/* 白底 + 左侧色条 + 图标方块。色调由使用处内联给：style="--c:var(--success);--cbg:var(--success-bg)" */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:var(--sp-4)}
+.stat{display:flex;align-items:center;gap:var(--sp-3);background:var(--surface);
+  border:1px solid var(--line);border-left:4px solid var(--c,var(--primary));border-radius:var(--r-lg);
+  padding:var(--sp-4);box-shadow:var(--sh-sm);
+  transition:box-shadow var(--dur),transform var(--dur)}
+.stat:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.stat .stat-ico{width:40px;height:40px;flex:0 0 auto;border-radius:var(--r-md);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--cbg,var(--primary-light));color:var(--c,var(--primary))}
+.stat .stat-ico .ico,.stat .stat-ico svg.lucide{width:1.25em;height:1.25em}
+.stat .num{font-size:var(--fs-xl);font-weight:700;color:var(--ink);line-height:1.2}
+.stat .lbl{font-size:var(--fs-xs);color:var(--muted);margin-top:2px}
+
+/* ---------- 分段控件 ---------- */
+/* 药房状态筛选、患者端记录切换共用。登录页的 .group-tabs 是同一个思路，那边因为要独占一行没复用 */
+.segmented{display:inline-flex;gap:4px;flex-wrap:wrap;background:var(--gray-100);
+  border-radius:var(--r-lg);padding:4px}
+.segmented button{border:none;background:none;border-radius:var(--r-md);padding:7px var(--sp-4);
+  font-family:inherit;font-size:var(--fs-sm);font-weight:500;color:var(--gray-500);cursor:pointer;
+  transition:background var(--dur),color var(--dur),box-shadow var(--dur)}
+.segmented button:hover:not(.active){color:var(--primary)}
+.segmented button.active{background:var(--surface);color:var(--primary-dark);font-weight:600;box-shadow:var(--sh-sm)}
 
 /* ---------- 辅助 ---------- */
 .muted{color:var(--muted);font-size:var(--fs-sm)}
 .d-none{display:none !important}
 /* 放在 .row 里的按钮/窄控件：不参与等分伸缩（.row>* 会强制 flex:1） */
 .shrink{flex:0 0 auto}
+/* 时间戳小字（聊天气泡、问答条目）。必须排在 .muted 之后才能盖住它的字号 */
+.msg-time{font-size:var(--fs-xs);opacity:.75}
+/* 问答条目骨架：患者端「我的问答」与管理端「问答管理」共用，答案配色各自覆盖 */
+.qa-item{padding:var(--sp-3) 0;border-bottom:1px dashed var(--line)}
+.qa-item:last-child{border-bottom:none}
 footer{text-align:center;color:var(--gray-400);font-size:var(--fs-xs);padding:var(--sp-8) 0}
 
 /* ---------- 尊重系统的减弱动效偏好 ---------- */

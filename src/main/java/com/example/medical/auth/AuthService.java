@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 统一登录逻辑：/api/auth/login、/api/patient/login 与注册共用。
+ * 统一登录逻辑：/api/auth/login 与患者注册共用。
  * 账号密码统一校验 sys_user，再按 role 取对应业务档案返回给前端。
  */
 @Slf4j

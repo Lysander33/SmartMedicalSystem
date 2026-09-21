@@ -18,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 患者端-账户与就诊人相关接口
@@ -54,19 +53,6 @@ public class PatientController {
         Patient saved = authService.registerPatient(patient);
         saved.setPassword(null);
         return Result.success(saved);
-    }
-
-    /**
-     * 用户登录：与 /api/auth/login 共用同一套逻辑，返回结构也一致（token + profile）
-     */
-    @Operation(summary = "用户登录")
-    @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody Patient patient) {
-        log.info("患者登录, phone={}", patient.getPhone());
-        if (patient.getPhone() == null || patient.getPassword() == null) {
-            throw new BizException(400, "手机号和密码不能为空");
-        }
-        return Result.success(authService.login("patient", patient.getPhone(), patient.getPassword()));
     }
 
     /**

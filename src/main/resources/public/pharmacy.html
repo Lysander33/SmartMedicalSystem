@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智慧医疗就诊系统 - 药房</title>
+<!-- 门禁放在样式表之前：未登录直接跳登录页，连样式都不必下载，也不会闪出半个页面 -->
+<script src="/js/auth.js"></script>
+<script>SM.requireLogin('pharmacy');</script>
 <link rel="stylesheet" href="/css/app.css">
 <style>
-/* 本页独占：状态筛选胶囊（药房独有的筛选交互，其他端没有） */
-.filters{display:flex;gap:var(--sp-3);margin-bottom:var(--sp-4);flex-wrap:wrap}
-.filters button{padding:7px 18px;border:1.5px solid var(--primary);background:var(--surface);color:var(--primary);
-  border-radius:var(--r-full);cursor:pointer;font-family:inherit;font-size:var(--fs-base);font-weight:500;
-  transition:background var(--dur),color var(--dur),box-shadow var(--dur),transform var(--dur)}
-.filters button:hover{background:var(--primary-light);transform:translateY(-1px)}
-.filters button.active{background:var(--primary);color:#fff;box-shadow:0 4px 10px var(--primary-ring);transform:none}
+/* 状态筛选条：外观走共享的 .segmented，这里只补间距。
+   .filters 这个类名要留着 —— 页面脚本用 document.querySelector('.filters') 绑事件、用
+   querySelectorAll('.filters button') 切 active，换名字事件就断了 */
+.filters{margin-bottom:var(--sp-4)}
 </style>
 </head>
 <body data-role="pharmacy">
@@ -22,20 +22,32 @@
 </div>
 
 <div class="main">
+  <div class="page-head">
+    <span class="eyebrow"><i data-lucide="pill" class="ico"></i>药房工作台</span>
+    <h1>处方接收与核对</h1>
+    <p>实时接收医生提交的电子处方，按状态筛选后核对药品明细，发药并记录完成备注。</p>
+  </div>
+
   <div class="card">
-    <h3><i data-lucide="inbox" class="ico"></i>处方接收 <span class="muted">（实时接收医生提交的电子处方，按状态筛选）</span></h3>
-    <div class="filters">
-      <button class="active" data-s="">全部</button>
-      <button data-s="待发药">待发药</button>
-      <button data-s="待缴费">待缴费</button>
-      <button data-s="已完成">已完成</button>
-      <button data-s="已作废">已作废</button>
+    <div class="card-head">
+      <h3><i data-lucide="inbox" class="ico"></i>处方接收</h3>
+      <div class="card-actions">
+        <div class="filters segmented">
+          <button class="active" data-s="">全部</button>
+          <button data-s="待发药">待发药</button>
+          <button data-s="待缴费">待缴费</button>
+          <button data-s="已完成">已完成</button>
+          <button data-s="已作废">已作废</button>
+        </div>
+      </div>
     </div>
     <div id="rxList"></div>
   </div>
 
   <div class="card" id="detailCard" style="display:none">
-    <h3><i data-lucide="scan-search" class="ico"></i>处方核对</h3>
+    <div class="card-head">
+      <h3><i data-lucide="scan-search" class="ico"></i>处方核对</h3>
+    </div>
     <div id="rxDetail"></div>
     <label>完成备注</label>
     <input id="remark" placeholder="如：已发药，患者已取走 / 部分完成 / 缺药待补" value="已发药，患者已取走">
@@ -45,7 +57,6 @@
 <footer>智慧医疗就诊系统 · 药房 | 处方接收核对 · 配药发药 · 完成状态备注</footer>
 
 <script src="/js/lucide.min.js"></script>
-<script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
 <script>
 //统一登录：令牌与身份按角色分槽存（token_患者 / token_药房 ...），四个端互不覆盖
@@ -71,11 +82,12 @@ async function loadList() {
   const r = await S.api('/api/pharmacy/rx/list' + (currentStatus ? '?status=' + encodeURIComponent(currentStatus) : ''));
   const box = document.getElementById('rxList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无处方'); return; }
-  box.innerHTML = '<table><tr><th>处方编号</th><th>就诊人</th><th>开方医生</th><th>诊断</th><th>金额</th><th>状态</th><th>开方时间</th><th>操作</th></tr>' +
-    r.data.map(p => `<tr><td>${p.rxNo}</td><td>${p.visitorName}</td><td>${p.doctorName}</td>
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>处方编号</th><th>就诊人 / 开方医生</th><th>诊断</th><th>金额</th><th>状态</th><th>开方时间</th><th>操作</th></tr>' +
+    r.data.map(p => `<tr><td><b>${p.rxNo}</b></td>
+      <td><div class="cell-main">${p.visitorName}</div><div class="cell-sub">${p.doctorName}</div></td>
       <td>${(p.diagnosis || '').substring(0, 14)}</td><td>￥${p.totalAmount}</td>
       <td>${SM.statusTag('rx', p.status)}</td><td>${SM.fmtTime(p.createTime)}</td>
-      <td><button class="btn btn--info sm" onclick="showDetail(${p.id})">核对/详情</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn btn--info sm" onclick="showDetail(${p.id})">核对/详情</button></td></tr>`).join('') + '</table></div>';
 }
 
 async function showDetail(id) {
@@ -85,18 +97,22 @@ async function showDetail(id) {
   const p = r.data;
   document.getElementById('detailCard').style.display = 'block';
   document.getElementById('rxDetail').innerHTML = `
+    <div class="table-wrap table-wrap--plain">
     <table>
       <tr><th>处方编号</th><td>${p.rxNo}</td><th>状态</th><td>${SM.statusTag('rx', p.status)}</td></tr>
       <tr><th>就诊人</th><td>${p.visitorName}</td><th>开方医生</th><td>${p.doctorName}</td></tr>
       <tr><th>诊断</th><td colspan="3">${p.diagnosis}</td></tr>
       <tr><th>缴费状态</th><td colspan="3">${p.status === '待缴费' ? SM.tag('未缴费（暂缓发药）', 'warn') : SM.tag('已缴费', 'success')}</td></tr>
     </table>
-    <h3 style="margin-top:var(--sp-4)">药品明细（核对名称、规格、数量、用法用量）</h3>
+    </div>
+    <h3 style="margin-top:var(--sp-5)">药品明细（核对名称、规格、数量、用法用量）</h3>
+    <div class="table-wrap">
     <table><tr><th>药品</th><th>规格</th><th>数量</th><th>用法用量</th><th>疗程</th><th>小计</th></tr>
       ${(p.items || []).map(i => `<tr><td>${i.medicineName}</td><td>${i.spec}</td><td>${i.quantity}</td>
         <td>${i.dosage || ''} ${i.frequency || ''}</td><td>${i.course || ''}</td><td>￥${i.subtotal}</td></tr>`).join('')}
     </table>
-    <p class="muted" style="margin-top:var(--sp-2)">合计金额：￥${p.totalAmount} ${p.remark ? '｜ 备注：' + p.remark : ''}</p>`;
+    </div>
+    <p class="muted" style="margin-top:var(--sp-3)">合计金额：￥${p.totalAmount} ${p.remark ? '｜ 备注：' + p.remark : ''}</p>`;
   document.getElementById('detailCard').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -110,17 +126,16 @@ async function dispense() {
   }
 }
 
-//未登录（无身份或无令牌）直接跳登录页；已登录才初始化，避免拿 null 取属性报错
-if (S.hasAuth()) {
+//令牌可能已经作废（2 小时不活动就过期），核对通过才初始化，避免拿 null 身份取属性报错
+S.verify().then(ok => {
+  if (!ok) return;
   SM.renderTopbar({
     elId: 'staffArea', user: S.user, icon: 'pill',
     label: u => `${u.name}（${u.account}）`,
     logoutFn: 'logoutStaff', logoutText: '退出登录'
   });
   loadList();
-} else {
-  location.href = '/login.html?role=pharmacy';
-}
+});
 
 SM.initIcons();
 </script>

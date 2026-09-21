@@ -4,16 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智慧医疗就诊系统 - 医生端</title>
+<!-- 门禁放在样式表之前：未登录直接跳登录页，连样式都不必下载，也不会闪出半个页面 -->
+<script src="/js/auth.js"></script>
+<script>SM.requireLogin('doctor');</script>
 <link rel="stylesheet" href="/css/app.css">
 <style>
-/* 本页独占：头部医生卡片 + 折叠子面板 + 处方数量框 + 消息时间戳 */
-.doc-flex{display:flex;gap:var(--sp-4);align-items:center}
-.doc-body{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
-.doc-head{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
-.doc-name{font-size:var(--fs-lg)}
+/* 本页独占：折叠子面板 + 处方录入网格 + 处方数量框 */
 .subpanel{display:none;margin-top:var(--sp-3);border-top:1px dashed var(--line);padding-top:var(--sp-3)}
 .qty{max-width:90px}
-.msg-time{font-size:var(--fs-xs);opacity:.7}
+/* 处方录入行：药品下拉要宽、其余四五个窄输入框平分。
+   用网格而不是 .row —— .row>* 会把每个子项都设成 flex:1，药品下拉会被撑得跟数量框一样宽 */
+.rx-grid{display:grid;grid-template-columns:2.2fr .8fr 1.2fr 1.2fr 1fr auto;gap:var(--sp-2);align-items:center}
+.rx-grid input,.rx-grid select{margin-bottom:0}
+.rx-grid .btn{white-space:nowrap}
+@media (max-width:900px){
+  .rx-grid{grid-template-columns:1fr 1fr}
+  .rx-grid .btn{grid-column:1 / -1}
+}
 </style>
 </head>
 <body data-role="doctor">
@@ -23,19 +30,33 @@
 </div>
 
 <div class="main">
+  <div class="page-head">
+    <span class="eyebrow"><i data-lucide="stethoscope" class="ico"></i>医生工作台</span>
+    <h1>今日接诊</h1>
+    <p>接诊提醒 → 挂号队列完成就诊 → 在线问诊与开方 → 处方历史，门诊与线上问诊都在这一个页面走完。</p>
+  </div>
+
   <div class="card">
-    <h3><i data-lucide="stethoscope" class="ico"></i>当前医生</h3>
+    <div class="card-head">
+      <h3><i data-lucide="stethoscope" class="ico"></i>当前医生</h3>
+    </div>
     <div id="doctorCard"></div>
   </div>
 
   <div class="card">
-    <h3><i data-lucide="bell" class="ico"></i>接诊提醒（待接诊）</h3>
+    <div class="card-head">
+      <h3><i data-lucide="bell" class="ico"></i>接诊提醒（待接诊）</h3>
+    </div>
     <div id="pendingList"></div>
   </div>
 
   <div class="card">
-    <h3><i data-lucide="calendar-days" class="ico"></i>挂号患者队列（已缴费 · 待就诊）</h3>
-    <button class="btn btn--neutral sm" onclick="loadRegQueue()">刷新</button>
+    <div class="card-head">
+      <h3><i data-lucide="calendar-days" class="ico"></i>挂号患者队列（已缴费 · 待就诊）</h3>
+      <div class="card-actions">
+        <button class="btn btn--neutral sm" onclick="loadRegQueue()">刷新</button>
+      </div>
+    </div>
     <div id="regQueueList"></div>
     <div id="visitPanel" class="subpanel">
       <div id="visitWho" class="muted" style="margin-bottom:var(--sp-2)"></div>
@@ -49,19 +70,23 @@
   </div>
 
   <div class="card">
-    <h3><i data-lucide="message-square" class="ico"></i>我的问诊</h3>
+    <div class="card-head">
+      <h3><i data-lucide="message-square" class="ico"></i>我的问诊</h3>
+    </div>
     <div id="consultList"></div>
   </div>
 
   <div class="card" id="chatCard" style="display:none">
-    <h3><i data-lucide="message-square" class="ico"></i>问诊对话 <span id="chatMeta"></span></h3>
-    <div id="chatPatient" class="muted" style="margin-bottom:var(--sp-2)"></div>
+    <div class="card-head">
+      <h3><i data-lucide="message-square" class="ico"></i>问诊对话 <span id="chatMeta"></span></h3>
+    </div>
+    <div id="chatPatient" class="muted" style="margin-bottom:var(--sp-3)"></div>
     <div class="chat-box" id="chatBox"></div>
     <div class="row" style="margin-top:var(--sp-3)">
       <input id="chatInput" placeholder="回复患者..." style="margin-bottom:0">
       <button class="btn shrink" onclick="sendMsg()">发送</button>
     </div>
-    <div style="margin-top:var(--sp-3);display:flex;gap:var(--sp-3);flex-wrap:wrap">
+    <div class="card-actions" style="margin-top:var(--sp-4)">
       <button class="btn btn--neutral sm" onclick="refreshMsgs()">刷新消息</button>
       <button class="btn btn--info sm" onclick="showHistory()">查看患者病历</button>
       <button class="btn sm" onclick="openRxForm()">开具电子处方</button>
@@ -76,38 +101,45 @@
   </div>
 
   <div class="card" id="rxCard" style="display:none">
-    <h3><i data-lucide="file-text" class="ico"></i>开具电子处方</h3>
+    <div class="card-head">
+      <h3><i data-lucide="file-text" class="ico"></i>开具电子处方</h3>
+    </div>
     <label>诊断结论</label>
     <input id="rxDiagnosis" placeholder="如：急性上呼吸道感染">
     <label>选择药品（从药品字典检索，自动校验库存）</label>
-    <div class="row">
+    <div class="rx-grid">
       <select id="rxMedicine"></select>
       <input id="rxQty" class="qty" type="number" placeholder="数量" value="1">
       <input id="rxDosage" placeholder="单次剂量 如:1粒">
       <input id="rxFrequency" placeholder="频次 如:每日3次">
       <input id="rxCourse" placeholder="疗程 如:3天">
-      <button class="btn shrink sm" onclick="addRxItem()">加入处方</button>
+      <button class="btn btn--info sm" onclick="addRxItem()">加入处方</button>
     </div>
     <div id="rxItems"></div>
-    <button class="btn" onclick="submitRx()">提交处方（校验后流转药房）</button>
+    <button class="btn" style="margin-top:var(--sp-2)" onclick="submitRx()">提交处方（校验后流转药房）</button>
     <div id="rxResult"></div>
   </div>
 
   <div class="card" id="historyCard" style="display:none">
-    <h3><i data-lucide="history" class="ico"></i>患者病历与历史记录</h3>
+    <div class="card-head">
+      <h3><i data-lucide="history" class="ico"></i>患者病历与历史记录</h3>
+    </div>
     <div id="historyList"></div>
   </div>
 
   <div class="card">
-    <h3><i data-lucide="clipboard-list" class="ico"></i>我的处方历史</h3>
-    <button class="btn btn--neutral sm" onclick="loadMyRx()">刷新</button>
+    <div class="card-head">
+      <h3><i data-lucide="clipboard-list" class="ico"></i>我的处方历史</h3>
+      <div class="card-actions">
+        <button class="btn btn--neutral sm" onclick="loadMyRx()">刷新</button>
+      </div>
+    </div>
     <div id="rxList"></div>
   </div>
 </div>
 <footer>智慧医疗就诊系统 · 医生端 | 在线接诊 · 在线问诊 · 电子处方</footer>
 
 <script src="/js/lucide.min.js"></script>
-<script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
 <script>
 //统一登录：令牌与身份按角色分槽存（token_患者 / token_医生 ...），四个端互不覆盖
@@ -127,16 +159,20 @@ async function init() {
   //医生身份锁定为当前登录账号，不可切换到其他医生
   doctor = { id: S.user.id, name: S.user.name };
   document.getElementById('doctorCard').innerHTML = `
-    <div class="doc-flex">
+    <div class="row-card">
       <div class="avatar">${S.user.name[0]}</div>
-      <div class="doc-body">
-        <div class="doc-head">
-          <b class="doc-name">${S.user.name}</b>
+      <div class="row-main">
+        <div class="row-title">
+          ${S.user.name}
           ${SM.tag(S.user.title || '', 'success')}
           ${SM.tag(S.user.deptName || '', 'info')}
+          ${SM.tag(S.user.onlineStatus || '在线', (S.user.onlineStatus || '在线') === '在线' ? 'success' : 'neutral')}
         </div>
-        <div class="muted">工号 ${S.user.account} ｜ 挂号费 ￥${S.user.fee ?? '-'} ｜ 当前状态：${S.user.onlineStatus || '在线'}</div>
-        <div class="muted">擅长：${S.user.specialty || '常见病诊治'}</div>
+        <div class="row-meta">
+          <span>工号 ${S.user.account}</span><span class="dot">·</span>
+          <span>挂号费 ￥${S.user.fee ?? '-'}</span><span class="dot">·</span>
+          <span>擅长：${S.user.specialty || '常见病诊治'}</span>
+        </div>
       </div>
     </div>`;
   const mr = await S.api('/api/doctorwork/medicines');
@@ -151,10 +187,10 @@ async function loadRegQueue() {
   const r = await S.api('/api/doctorwork/reg/queue');
   const box = document.getElementById('regQueueList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无已缴费待就诊的挂号'); return; }
-  box.innerHTML = '<table><tr><th>挂号单号</th><th>就诊人</th><th>就诊日期</th><th>时段</th><th>挂号费</th><th>缴费时间</th><th>操作</th></tr>' +
-    r.data.map(g => `<tr><td>${g.regNo}</td><td>${g.visitorName}</td><td>${SM.fmtDate(g.workDate)}</td>
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>挂号单号</th><th>就诊人</th><th>就诊日期</th><th>时段</th><th>挂号费</th><th>缴费时间</th><th>操作</th></tr>' +
+    r.data.map(g => `<tr><td><b>${g.regNo}</b></td><td>${g.visitorName}</td><td>${SM.fmtDate(g.workDate)}</td>
       <td>${g.timeSlot}</td><td>￥${g.fee}</td><td>${SM.fmtTime(g.payTime)}</td>
-      <td><button class="btn sm" onclick="openVisit(${g.id}, '${g.visitorName}')">完成就诊</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn sm" onclick="openVisit(${g.id}, '${g.visitorName}')">完成就诊</button></td></tr>`).join('') + '</table></div>';
 }
 function openVisit(id, name) {
   currentReg = { id, name };
@@ -182,10 +218,10 @@ async function loadPending() {
   const r = await S.api('/api/doctorwork/pending');
   const box = document.getElementById('pendingList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无待接诊的咨询'); return; }
-  box.innerHTML = '<table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>发起时间</th><th>操作</th></tr>' +
-    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${c.type}</td>
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>发起时间</th><th>操作</th></tr>' +
+    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${SM.tag(c.type, 'info')}</td>
       <td>${(c.description || '').substring(0, 25)}</td><td>${SM.fmtTime(c.createTime)}</td>
-      <td><button class="btn sm" onclick="accept(${c.id})">接诊</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn sm" onclick="accept(${c.id})">接诊</button></td></tr>`).join('') + '</table></div>';
 }
 async function accept(id) {
   const r = await S.api('/api/doctorwork/accept?consultationId=' + id, { method: 'POST' });
@@ -198,12 +234,12 @@ async function loadConsults() {
   const r = await S.api('/api/doctorwork/consultations');
   const box = document.getElementById('consultList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无问诊'); return; }
-  box.innerHTML = '<table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>状态</th><th>问诊小结</th><th>操作</th></tr>' +
-    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${c.type}</td>
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>编号</th><th>就诊人</th><th>类型</th><th>病情描述</th><th>状态</th><th>问诊小结</th><th>操作</th></tr>' +
+    r.data.map(c => `<tr><td>${c.id}</td><td>${c.visitorName}</td><td>${SM.tag(c.type, 'info')}</td>
       <td>${(c.description || '').substring(0, 20)}</td>
       <td>${SM.statusTag('consult', c.status)}</td>
       <td>${c.summary ? c.summary.substring(0, 15) : '-'}</td>
-      <td><button class="btn btn--info sm" onclick="openChat(${c.id})">打开</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn btn--info sm" onclick="openChat(${c.id})">打开</button></td></tr>`).join('') + '</table></div>';
 }
 
 async function openChat(id) {
@@ -257,9 +293,10 @@ async function showHistory() {
   const box = document.getElementById('historyList');
   document.getElementById('historyCard').style.display = 'block';
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('该患者暂无历史病历'); return; }
-  box.innerHTML = '<table><tr><th>时间</th><th>科室/医生</th><th>诊断</th><th>医嘱建议</th></tr>' +
-    r.data.map(m => `<tr><td>${SM.fmtTime(m.createTime)}</td><td>${m.deptName || ''}/${m.doctorName}</td>
-      <td>${m.diagnosis}</td><td>${m.advice || ''}</td></tr>`).join('') + '</table>';
+  box.innerHTML = '<div class="table-wrap"><table><tr><th>时间</th><th>科室 / 医生</th><th>诊断</th><th>医嘱建议</th></tr>' +
+    r.data.map(m => `<tr><td>${SM.fmtTime(m.createTime)}</td>
+      <td><div class="cell-main">${m.doctorName}</div><div class="cell-sub">${m.deptName || ''}</div></td>
+      <td>${m.diagnosis}</td><td>${m.advice || ''}</td></tr>`).join('') + '</table></div>';
   document.getElementById('historyCard').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -294,10 +331,10 @@ function removeRxItem(mid) {
 function renderRxItems() {
   const box = document.getElementById('rxItems');
   if (rxItems.length === 0) { box.innerHTML = SM.empty('尚未添加药品'); return; }
-  box.innerHTML = '<table><tr><th>药品</th><th>数量</th><th>单次剂量</th><th>频次</th><th>疗程</th><th>操作</th></tr>' +
+  box.innerHTML = '<div class="table-wrap table-wrap--plain"><table><tr><th>药品</th><th>数量</th><th>单次剂量</th><th>频次</th><th>疗程</th><th>操作</th></tr>' +
     rxItems.map(i => `<tr><td>${i.medicineName}</td><td>${i.quantity}</td><td>${i.dosage}</td>
       <td>${i.frequency}</td><td>${i.course}</td>
-      <td><button class="btn btn--warn sm" onclick="removeRxItem(${i.medicineId})">移除</button></td></tr>`).join('') + '</table>';
+      <td><button class="btn btn--warn sm" onclick="removeRxItem(${i.medicineId})">移除</button></td></tr>`).join('') + '</table></div>';
 }
 async function submitRx() {
   const diagnosis = document.getElementById('rxDiagnosis').value.trim();
@@ -314,11 +351,13 @@ async function loadMyRx() {
   const r = await S.api('/api/doctorwork/rx/my');
   const box = document.getElementById('rxList');
   if (!r.data || r.data.length === 0) { box.innerHTML = SM.empty('暂无处方'); return; }
-  box.innerHTML = '<table><tr><th>处方编号</th><th>就诊人</th><th>诊断</th><th>药品数</th><th>金额</th><th>状态</th><th>药房备注</th><th>操作</th></tr>' +
-    r.data.map(p => `<tr><td>${p.rxNo}</td><td>${p.visitorName}</td><td>${(p.diagnosis || '').substring(0, 12)}</td>
-      <td>${(p.items || []).length}种</td><td>￥${p.totalAmount}</td>
+  box.innerHTML = '<div class="table-wrap table-wrap--limit"><table><tr><th>处方编号</th><th>就诊人</th><th>诊断 / 明细</th><th>金额</th><th>状态</th><th>药房备注</th><th>操作</th></tr>' +
+    r.data.map(p => `<tr><td><b>${p.rxNo}</b></td><td>${p.visitorName}</td>
+      <td><div class="cell-main">${(p.diagnosis || '').substring(0, 12)}</div>
+        <div class="cell-sub">共 ${(p.items || []).length} 种药品</div></td>
+      <td>￥${p.totalAmount}</td>
       <td>${SM.statusTag('rx', p.status)}</td><td>${p.remark || '-'}</td>
-      <td>${p.status === '待缴费' ? `<button class="btn btn--warn sm" onclick="cancelRx(${p.id})">作废</button>` : ''}</td></tr>`).join('') + '</table>';
+      <td>${p.status === '待缴费' ? `<button class="btn btn--warn sm" onclick="cancelRx(${p.id})">作废</button>` : ''}</td></tr>`).join('') + '</table></div>';
 }
 async function cancelRx(id) {
   if (!confirm('确认作废该处方？')) return;
@@ -327,18 +366,17 @@ async function cancelRx(id) {
   loadMyRx();
 }
 
-//未登录（无身份或无令牌）直接跳登录页；已登录才初始化，
-//否则 init() 会拿 null 取属性抛 TypeError，页面表现为空白
-if (S.hasAuth()) {
+//令牌可能已经作废（2 小时不活动就过期），核对通过才初始化，
+//否则 init() 会拿 null 身份取属性抛 TypeError，页面表现为空白
+S.verify().then(ok => {
+  if (!ok) return;
   SM.renderTopbar({
     elId: 'staffArea', user: S.user, icon: 'stethoscope',
     label: u => `${u.name}（${u.account}）`,
     logoutFn: 'logoutDoctor', logoutText: '退出登录'
   });
   init();
-} else {
-  location.href = '/login.html?role=doctor';
-}
+});
 
 SM.initIcons();
 </script>
