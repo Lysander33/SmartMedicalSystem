@@ -7,7 +7,7 @@ import java.util.Date;
  * 缴费订单
  */
 @Data
-public class Payment {
+public class     Payment {
     private Integer id;
     private String orderNo;
     private Integer patientId;
